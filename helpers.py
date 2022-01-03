@@ -265,7 +265,6 @@ def scale_up_pvc(namespace, name, new_size):
         result = kubernetes_core_api.patch_namespaced_persistent_volume_claim(
                     name=name,
                     namespace=namespace,
-                    timeout_seconds=HTTP_TIMEOUT,
                     body={
                         "metadata": {"annotations": {"volume.autoscaler.kubernetes.io/last-resized-at": str(int(time.mktime(time.gmtime())))}},
                         "spec": {"resources": {"requests": {"storage": new_size}} }

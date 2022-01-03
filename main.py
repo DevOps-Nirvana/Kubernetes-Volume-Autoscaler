@@ -4,10 +4,10 @@ import time
 from helpers import INTERVAL_TIME, PROMETHEUS_URL, DRY_RUN, PROMETHEUS_LABEL_MATCH
 from helpers import convert_bytes_to_storage, scale_up_pvc, testIfPrometheusIsAccessible, describe_all_pvcs
 from helpers import fetch_pvcs_from_prometheus, printHeaderAndConfiguration, calculateBytesToScaleTo
+import slack
 
 # Other globals
 IN_MEMORY_STORAGE = {}
-
 
 # Entry point and main application loop
 if __name__ == "__main__":
@@ -85,8 +85,23 @@ if __name__ == "__main__":
                                 print("  DRY RUN, WOULD HAVE RESIZED disk from {} to {}".format(convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']), convert_bytes_to_storage(resize_to_bytes)))
                             else:
                                 print("  RESIZING disk from {} to {}".format(convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']), convert_bytes_to_storage(resize_to_bytes)))
-                                if not scale_up_pvc(volume_namespace, volume_name, resize_to_bytes):
+                                if scale_up_pvc(volume_namespace, volume_name, resize_to_bytes):
+                                    slack.send("Successfully scaled up `{}` from `{}` to `{}`, it was using more than `{}%` disk space over the last `{} seconds`".format(
+                                        volume_description,
+                                        convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']),
+                                        convert_bytes_to_storage(resize_to_bytes),
+                                        pvcs_in_kubernetes[volume_description]['scale_above_percent'],
+                                        IN_MEMORY_STORAGE[volume_description] * INTERVAL_TIME,
+                                    ))
+                                else:
                                     print("  FAILED SCALING UP")
+                                    slack.send("FAILED Scaling up `{}` from `{}` to `{}`, it was using more than `{}%` disk space over the last `{} seconds`".format(
+                                        volume_description,
+                                        convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']),
+                                        convert_bytes_to_storage(resize_to_bytes),
+                                        pvcs_in_kubernetes[volume_description]['scale_above_percent'],
+                                        IN_MEMORY_STORAGE[volume_description] * INTERVAL_TIME,
+                                    ))
 
                         else:
                             print("  AND need to wait {} seconds to scale".format( abs(pvcs_in_kubernetes[volume_description]['last_resized_at'] + pvcs_in_kubernetes[volume_description]['scale_cooldown_time']) - int(time.mktime(time.gmtime())) ))

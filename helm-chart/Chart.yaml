@@ -1,0 +1,15 @@
+apiVersion: v2
+appVersion: 1.0.0
+description: Volume Autoscaler scales Kubernetes volumes up automatically based on metrics from Prometheus, helm chart based on Universal Helm Charts from DevOps Nirvana
+home: https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler
+icon: https://raw.githubusercontent.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/master/icon.png
+maintainers:
+- email: farley@neonsurge.com
+  name: Farley
+name: volume-autoscaler
+sources:
+- https://github.com/devops-nirvana/volume-autoscaler/
+- https://devops-nirvana.s3.amazonaws.com/helm-charts/index.yaml
+- https://github.com/DevOps-Nirvana/Universal-Kubernetes-Helm-Charts
+type: application
+version: 1.0.0

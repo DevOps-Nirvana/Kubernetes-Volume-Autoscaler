@@ -1,0 +1,139 @@
+# The name of the service and pods/deployment/etc being deployed
+name: volume-autoscaler
+
+# Number of pods in deployment, we only support 1 running
+replicaCount: 1
+
+# Can only have 1 running at a time, this service is not highly-available
+deploymentStrategy:
+  type: Recreate
+
+# Our image is on DockerHub, replace tag during builds automatically
+image:
+  repository: devopsnirvana/kubernetes-volume-autoscaler
+  tag: latest  # This should be replaced with an semver tag release automatically during CI for releases
+
+globalEnvs:
+  # This is how we confiure the Slack integration, set the two values below
+  - name: SLACK_WEBHOOK_URL
+    value: "{{ .Values.slack_webhook_url }}"
+  - name: SLACK_CHANNEL
+    value: "{{ .Values.slack_channel }}"
+  # This is how we we can deploy this chart to a different namespace than Prometheus, by telling it where to access Prometheus
+  #   Eg: http://prometheus-server.namespace.svc.cluster.local
+  - name: PROMETHEUS_URL
+    value: "{{ .Values.prometheus_url }}"
+
+# Additional pod annotations
+podAnnotations: {}
+  # tick: "1528451892"
+
+# Additional labels put onto anything that can be labelled (pods, services)
+labels: {}
+
+# This adds lifecycle events for the deployment
+lifecycle: {}
+
+# Lower the ndots value, to reduce the search path expansion of DNS queries
+# https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-config
+dnsConfig:
+  enabled: false
+  ndots: 2
+
+# container resource requests/limits
+# some suggested values are below, but will likely only get you into about 100 pvcs.  Your usage may vary
+#   so dial this if and as you wish based on your setup
+# Note: Limits are HARD Limits
+#       Requests are "soft" limits and are what affects HPA (autoscaling) aggressiveness and are what resources are is guaranteed
+# To use below, remove the {} and uncomment the following 6 lines and customize them as desired
+resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 64Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 64Mi
+
+# Assign pods to nodes based on nodeSelector labels, define a default here if desired
+# To use below, remove the {} and uncomment the following 1 lines and/or add your own lines
+nodeSelector: []
+# purpose: node-feature-name
+
+# Assign pods to nodes based on tolerations and taints
+tolerations: []
+
+# Init container(s)
+initContainers: []
+  # - name: volume-mount-hack
+  #   image: busybox
+  #   command: ["sh", "-c", "chown -R 1000:1000 /var/chaindata"]
+  #   volumeMounts:
+  #    - name: data
+  #      mountPath: /var/chaindata
+
+# Additional containers to be added to the pod (eg: add the cloudsql proxy)
+extraContainers: []
+
+# Volumes added to the pod eg: for cloudsql
+volumes: []
+volumeMounts: []
+
+# For AWS Security Groups, if you wish to use this specify the sg-123123123 in an list here
+securityGroupIDs: []
+
+serviceAccount:
+  enabled: true
+  # Add annotations if desited to your service account
+  annotations: {}
+    # Here's an example of assigning an IAM role to a pod, remove the {} above and uncomment this if needed
+    # eks.amazonaws.com/role-arn: arn:aws:iam::123123123:role/role-name-goes-here
+
+# This is absolutely necessary, this is how this service reads and updates PVCs and talks to Kubernetes
+# Do not change any of this, or the volume autoscaler will not function any more
+rbac:
+  create: true
+  clusterWideAccess: true
+  rules:
+    # This is how we listen and update PVCs
+    - apiGroups: ['*']
+      resources: ['persistentvolumeclaims']
+      verbs:
+        - list
+        - patch
+    # This is so we can send events into Kubernetes viewable in the event viewer
+    - apiGroups: [""]
+      resources:
+        - events
+      verbs:
+        - create
+        - patch
+    # So we can to check StorageClasses for if they have AllowVolumeExpansion set to true
+    - apiGroups: ["storage.k8s.io"]
+      resources:
+        - storageclasses
+      verbs:
+        - list
+
+# This is to use new kubernetes standard labeling, should be true on both always
+usingNewRecommendedLabels: true
+labelsEnableDefault: true
+
+# We don't use a lot of features from the upstream chart, so disable them
+service:
+  enabled: false
+livenessProbe:
+  enabled: false
+readinessProbe:
+  enabled: false
+podDistuptionBudget:
+  enabled: false
+ingress:
+  enabled: false
+ingress_secondary:
+  enabled: false
+autoscaling:
+  enabled: false
+security:
+  runAsNonRoot: false
+sidecar:
+  enabled: false

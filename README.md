@@ -26,3 +26,4 @@ This repository contains a service that automatically adjusts the size of a Pers
 * Add badges to the README
 * Listen/watch to events of the PV/PVC to monitor and ensure the resizing happens, log it accordingly
 * Test it and add working examples of using this on other cloud providers (Azure / Google Cloud)
+* Make per-PVC annotations to (re)direct Slack to different webhooks and/or different channel(s)

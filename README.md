@@ -27,3 +27,4 @@ This repository contains a service that automatically adjusts the size of a Pers
 * Listen/watch to events of the PV/PVC to monitor and ensure the resizing happens, log it accordingly
 * Test it and add working examples of using this on other cloud providers (Azure / Google Cloud)
 * Make per-PVC annotations to (re)direct Slack to different webhooks and/or different channel(s)
+* Discuss what the ideal "default" amount of time before scaling.  Currently is 5 minutes (5, 60 minute intervals)

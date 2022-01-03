@@ -1,0 +1,39 @@
+# This example below will create an PVC using the default StorageClass which you should
+# have configured to AllowVolumeExpansion set to True before using this.  When the pod
+# boots up it will automatically fill up the PVC disk, which should if you have the
+# volume autoscaler installed automatically expand the volume based on the default parameters
+#
+# Simply run: kubectl apply -f examples/simple-pod-with-pvc.yaml
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: test-claim1
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3G
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-claim1
+spec:
+  containers:
+  - name: write
+    image: apache:latest
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do dd if=/dev/zero of=/mnt/pv/test.img bs=16M; sleep 600;done"]
+    volumeMounts:
+    - mountPath: "/mnt/pv"
+      name: test-volume
+    stdin: true
+    stdinOnce: true
+    tty: true
+  volumes:
+  - name: test-volume
+    persistentVolumeClaim:
+      claimName: test-claim1
+  restartPolicy: Never

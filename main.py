@@ -86,8 +86,9 @@ if __name__ == "__main__":
                             else:
                                 print("  RESIZING disk from {} to {}".format(convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']), convert_bytes_to_storage(resize_to_bytes)))
                                 if scale_up_pvc(volume_namespace, volume_name, resize_to_bytes):
-                                    slack.send("Successfully scaled up `{}` from `{}` to `{}`, it was using more than `{}%` disk space over the last `{} seconds`".format(
+                                    slack.send("Successfully scaled up `{}` by `{}%` from `{}` to `{}`, it was using more than `{}%` disk space over the last `{} seconds`".format(
                                         volume_description,
+                                        pvcs_in_kubernetes[volume_description]['scale_up_percent'],
                                         convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']),
                                         convert_bytes_to_storage(resize_to_bytes),
                                         pvcs_in_kubernetes[volume_description]['scale_above_percent'],
@@ -95,8 +96,9 @@ if __name__ == "__main__":
                                     ))
                                 else:
                                     print("  FAILED SCALING UP")
-                                    slack.send("FAILED Scaling up `{}` from `{}` to `{}`, it was using more than `{}%` disk space over the last `{} seconds`".format(
+                                    slack.send("FAILED Scaling up `{}` by `{}%` from `{}` to `{}`, it was using more than `{}%` disk space over the last `{} seconds`".format(
                                         volume_description,
+                                        pvcs_in_kubernetes[volume_description]['scale_up_percent'],
                                         convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']),
                                         convert_bytes_to_storage(resize_to_bytes),
                                         pvcs_in_kubernetes[volume_description]['scale_above_percent'],

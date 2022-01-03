@@ -1,5 +1,5 @@
 # Globals and input args
-FROM python:3.9.9
+FROM python:3.9.9-alpine
 RUN mkdir -p /app
 WORKDIR /app
 

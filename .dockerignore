@@ -1,0 +1,6 @@
+.git*
+unused
+.docker*
+Dockerfile
+*.png
+*.md

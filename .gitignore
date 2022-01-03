@@ -1,0 +1,5 @@
+requirements.lock
+.DS_Store
+deployment/*/charts
+unused
+__pycache__

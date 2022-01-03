@@ -1,6 +1,7 @@
 #!/bin/bash -e
-#
+######################
 # Usage Note: Please use this script before re-publishing a new version of volume-autoscaler, incase there was fixes upstream
+# Author: Farley <farley@neonsurge.com>
 ######################
 
 # Config

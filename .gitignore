@@ -6,4 +6,5 @@ __pycache__
 helm-chart/templates/*
 values.yaml.upstream
 to_be_applied.yaml
+index.yaml
 

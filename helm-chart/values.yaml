@@ -74,7 +74,7 @@ initContainers: []
 # Additional containers to be added to the pod (eg: add the cloudsql proxy)
 extraContainers: []
 
-# Volumes added to the pod eg: for cloudsql
+# Volumes added to the pod if needed
 volumes: []
 volumeMounts: []
 

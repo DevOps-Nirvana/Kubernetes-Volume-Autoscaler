@@ -32,6 +32,19 @@ $ helm install volume-autoscaler devops-nirvana/volume-autoscaler \
   --set "prometheus_url=http://prometheus-server.namespace.svc.cluster.local"
 ```
 
+Advanced helm usage...
+```bash
+# To view what changes it will make, if you change things, this requires the helm diff plugin - https://github.com/databus23/helm-diff
+helm diff upgrade volume-autoscaler --allow-unreleased devops-nirvana/volume-autoscaler \
+  --namespace infrastructure \
+  --set "slack_webhook_url=https://hooks.slack.com/services/123123123/4564564564/789789789789789789" \
+  --set "slack_channel=my-slack-channel-name" \
+  --set "prometheus_url=http://prometheus-server.namespace.svc.cluster.local"
+
+# To remove the service, simply run...
+helm uninstall volume-autoscaler
+```
+
 
 ### Installation with `kubectl`
 
@@ -41,28 +54,25 @@ $ helm install volume-autoscaler devops-nirvana/volume-autoscaler \
 # the namespace you can run the first few commands below...
 
 # IF YOU USE `infrastructure` AS THE NAMESPACE FOR PROMETHEUS SIMPLY...
-$ kubectl --namespace infrastructure apply https://devops-nirvana.s3.amazonaws.com/helm-charts/volume-autoscaler-1.0.0.yaml
+# NOTE: Slack notification will not work if you simply use this, you'll need to download this and customize the YAML to add your Slack Webhook
+$ kubectl --namespace infrastructure apply https://devops-nirvana.s3.amazonaws.com/helm-charts/volume-autoscaler-1.0.1.yaml
 
 # OR, IF YOU NEED TO CHANGE THE NAMESPACE...
 # #1: Download the yaml...
-$ wget https://devops-nirvana.s3.amazonaws.com/helm-charts/volume-autoscaler-1.0.0.yaml
+$ wget https://devops-nirvana.s3.amazonaws.com/helm-charts/volume-autoscaler-1.0.1.yaml
 # #1: Or download with curl
-$ curl https://devops-nirvana.s3.amazonaws.com/helm-charts/volume-autoscaler-1.0.0.yaml -o volume-autoscaler-1.0.0.yaml
+$ curl https://devops-nirvana.s3.amazonaws.com/helm-charts/volume-autoscaler-1.0.1.yaml -o volume-autoscaler-1.0.1.yaml
 # #2: Then replace the namespace in this, replacing
-cat volume-autoscaler-1.0.0.yaml | sed 's/"infrastructure"/"PROMETHEUS_NAMESPACE_HERE"/g' > ./to_be_applied.yaml
-# #3: Finally, apply it...
+cat volume-autoscaler-1.0.1.yaml | sed 's/"infrastructure"/"PROMETHEUS_NAMESPACE_HERE"/g' > ./to_be_applied.yaml
+# #3: If you wish to have slack notifications, edit this to_be_applied.yaml and embed your webhook on the value: line for SLACK_WEBHOOK
+# #4: Finally, apply it...
 $ kubectl --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE apply ./to_be_applied.yaml
 ```
 
 
 # TODO
 
-* Publish helm chart
-* Add simple example of how to install this in Kubernetes cluster with Helm
-* Add simple example of how to install this in Kubernetes cluster with an simple `kubectl apply`
-* Add more documentation / diagramming
 * Push to helm repo in a Github Action and push the static yaml as well
-
 * Add tests coverage to ensure the software works as intended moving forward
 * Do some load testing to see how well this software deals with scale (100+ PVs, 500+ PVs, etc)
 * Figure out what type of Memory/CPU is necessary for 500+ PVs, see above

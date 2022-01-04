@@ -23,7 +23,7 @@ metadata:
 spec:
   containers:
   - name: write
-    image: apache:latest
+    image: alpine:latest
     command: ["/bin/sh"]
     args: ["-c", "while true; do dd if=/dev/zero of=/mnt/pv/test.img bs=16M; sleep 600;done"]
     volumeMounts:

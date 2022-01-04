@@ -1,0 +1,23 @@
+# This example below will create an new default StorageClass in Kubernetes.  You should
+# delete the existing "gp2" storage class called "standard" with `kubectl delete storageclass standard`
+# before applying this file.  If desired to not use encrypted, remove/comment that line out.
+#
+# This file contains what is considered "best-practices" in the arena of AWS adn EKS, having all disks
+# encrypted-at-rest by default and retaining data for complaince/security/safety reasons.
+#
+# Simply run: kubectl apply -f examples/gp3-default-encrypt-retain-volexpansion-storageclass.yaml
+---
+allowVolumeExpansion: true
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+  name: gp3
+parameters:
+  encrypted: "true"
+  fsType: ext4
+  type: gp3
+provisioner: ebs.csi.aws.com
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer

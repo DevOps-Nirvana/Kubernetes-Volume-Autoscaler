@@ -14,18 +14,19 @@ This repository contains a service that automatically increases the size of a Pe
 ### Installation with Helm
 
 ```bash
-$ helm repo add devops-nirvana https://devops-nirvana.s3.amazonaws.com/helm-charts/
+# First, setup this repo for your helm
+helm repo add devops-nirvana https://devops-nirvana.s3.amazonaws.com/helm-charts/
 
 # Example 1 - Using autodiscovery, must be in the same namespace as Prometheus
-$ helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
+helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
   --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE
 
 # Example 2 - Manually setting where Prometheus is
-$ helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
+helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
   --set "prometheus_url=http://prometheus-server.namespace.svc.cluster.local"
 
 # Example 3 - Recommended usage, automatically detect Prometheus and use slack notifications
-$ helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
+helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
   --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE \
   --set "slack_webhook_url=https://hooks.slack.com/services/123123123/4564564564/789789789789789789" \
   --set "slack_channel=my-slack-channel-name"
@@ -34,17 +35,17 @@ $ helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
 Advanced helm usage...
 ```bash
 # To update your local knowledge of remote repos, you may need to do this before upgrading...
-$ helm repo update
+helm repo update
 
 # To view what changes it will make, if you change things, this requires the helm diff plugin - https://github.com/databus23/helm-diff
-$ helm diff upgrade volume-autoscaler --allow-unreleased devops-nirvana/volume-autoscaler \
+helm diff upgrade volume-autoscaler --allow-unreleased devops-nirvana/volume-autoscaler \
   --namespace infrastructure \
   --set "slack_webhook_url=https://hooks.slack.com/services/123123123/4564564564/789789789789789789" \
   --set "slack_channel=my-slack-channel-name" \
   --set "prometheus_url=http://prometheus-server.namespace.svc.cluster.local"
 
 # To remove the service, simply run...
-$ helm uninstall volume-autoscaler
+helm uninstall volume-autoscaler
 ```
 
 
@@ -57,18 +58,18 @@ $ helm uninstall volume-autoscaler
 
 # IF YOU USE `infrastructure` AS THE NAMESPACE FOR PROMETHEUS SIMPLY...
 # NOTE: Slack notification will not work if you simply use this, you'll need to download this and customize the YAML to add your Slack Webhook
-$ kubectl --namespace infrastructure apply https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.1.yaml
+kubectl --namespace infrastructure apply https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.1.yaml
 
 # OR, IF YOU NEED TO CHANGE THE NAMESPACE...
 # #1: Download the yaml...
-$ wget https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.1.yaml
+wget https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.1.yaml
 # #1: Or download with curl
-$ curl https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.1.yaml -o volume-autoscaler-1.0.1.yaml
+curl https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.1.yaml -o volume-autoscaler-1.0.1.yaml
 # #2: Then replace the namespace in this, replacing
 cat volume-autoscaler-1.0.1.yaml | sed 's/"infrastructure"/"PROMETHEUS_NAMESPACE_HERE"/g' > ./to_be_applied.yaml
 # #3: If you wish to have slack notifications, edit this to_be_applied.yaml and embed your webhook on the value: line for SLACK_WEBHOOK
 # #4: Finally, apply it...
-$ kubectl --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE apply ./to_be_applied.yaml
+kubectl --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE apply ./to_be_applied.yaml
 ```
 
 

@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
             # Precursor check to ensure we have info for this pvc in kubernetes object
             if volume_description not in pvcs_in_kubernetes:
-                print("  ERROR: The volume {} was not found in Kubernetes, please report this issue".format(volume_description))
+                print("  ERROR: The volume {} was not found in Kubernetes, either it was just deleted or some random jitter is occurring.  If this continues to occur, please report an bug".format(volume_description))
             else:
 
                 # Check if we are in an alert condition
@@ -75,9 +75,9 @@ if __name__ == "__main__":
                                 print("  SKIPPING scaling this because we are at the maximum size of {}".format(convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['scale_up_max_size'])))
                                 continue
 
-                            # Check if we set on this PV we want to bypass the volume autoscaler
-                            if pvcs_in_kubernetes[volume_description]['bypass']:
-                                print("  The bypass annotation was set to true, skipping handling this volume")
+                            # Check if we set on this PV we want to ignore the volume autoscaler
+                            if pvcs_in_kubernetes[volume_description]['ignore']:
+                                print("  The ignore annotation was set to true, skipping handling this volume")
                                 continue
 
                             # Check if we are DRY-RUN-ing and won't do anything
@@ -103,7 +103,7 @@ if __name__ == "__main__":
                                         convert_bytes_to_storage(resize_to_bytes),
                                         pvcs_in_kubernetes[volume_description]['scale_above_percent'],
                                         IN_MEMORY_STORAGE[volume_description] * INTERVAL_TIME,
-                                    ))
+                                    ), severity="error")
 
                         else:
                             print("  AND need to wait {} seconds to scale".format( abs(pvcs_in_kubernetes[volume_description]['last_resized_at'] + pvcs_in_kubernetes[volume_description]['scale_cooldown_time']) - int(time.mktime(time.gmtime())) ))

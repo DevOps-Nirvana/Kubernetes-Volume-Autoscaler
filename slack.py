@@ -66,10 +66,11 @@ def send(body, username="Kubernetes Volume Autoscaler", severity="info", channel
 
     # Set our channel, if set, if not it'll usually use the default (general) channel
     if (len(channel)):      payload['channel'] = channel
-    # Set our emoji or url if set
-    if (len(emoji)):        payload['icon_emoji'] = emoji
-    elif (len(iconurl)):    payload['icon_url'] = iconurl
-    else:                   payload['icon_emoji'] = getEmojiFromSeverity(severity);
+    # Set our emoji or url if set, but let error take precedence if error is set
+    if (severity == 'error'): payload['icon_emoji'] = getEmojiFromSeverity(severity);
+    elif (len(emoji)):        payload['icon_emoji'] = emoji
+    elif (len(iconurl)):      payload['icon_url'] = iconurl
+    else:                     payload['icon_emoji'] = getEmojiFromSeverity(severity);
     # Set verbose
     if verbose:             print("VERBOSE: Payload: \n" + json.dumps(payload, sort_keys=True, indent=4, separators=(',', ': ')))
     # Prefix body if error

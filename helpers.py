@@ -221,7 +221,7 @@ def convert_pvc_to_simpler_dict(pvc):
     return_dict['scale_up_min_increment'] = SCALE_UP_MIN_INCREMENT
     return_dict['scale_up_max_size']      = SCALE_UP_MAX_SIZE
     return_dict['scale_cooldown_time']    = SCALE_COOLDOWN_TIME
-    return_dict['bypass']                 = False
+    return_dict['ignore']                 = False
 
     # Override defaults with annotations on the PVC
     if 'volume.autoscaler.kubernetes.io/last-resized-at' in pvc.metadata.annotations:
@@ -238,8 +238,8 @@ def convert_pvc_to_simpler_dict(pvc):
         return_dict['scale_up_max_size'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-up-max-size'])
     if 'volume.autoscaler.kubernetes.io/scale-cooldown-time' in pvc.metadata.annotations:
         return_dict['scale_cooldown_time'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-cooldown-time'])
-    if 'volume.autoscaler.kubernetes.io/bypass' in pvc.metadata.annotations and pvc.metadata.annotations['volume.autoscaler.kubernetes.io/bypass'].lower() == "true":
-        return_dict['bypass'] = True
+    if 'volume.autoscaler.kubernetes.io/ignore' in pvc.metadata.annotations and pvc.metadata.annotations['volume.autoscaler.kubernetes.io/ignore'].lower() == "true":
+        return_dict['ignore'] = True
 
     # Return our cleaned up and simple flat dict with the values we care about, with overrides if specified
     return return_dict

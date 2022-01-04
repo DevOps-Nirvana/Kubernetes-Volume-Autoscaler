@@ -24,7 +24,7 @@ $ helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
 $ helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
   --set "prometheus_url=http://prometheus-server.namespace.svc.cluster.local"
 
-# Example 3 - Full and recommended example, automatically detect Prometheus and use slack notifications
+# Example 3 - Recommended usage, automatically detect Prometheus and use slack notifications
 $ helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
   --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE \
   --set "slack_webhook_url=https://hooks.slack.com/services/123123123/4564564564/789789789789789789" \
@@ -57,13 +57,13 @@ $ helm uninstall volume-autoscaler
 
 # IF YOU USE `infrastructure` AS THE NAMESPACE FOR PROMETHEUS SIMPLY...
 # NOTE: Slack notification will not work if you simply use this, you'll need to download this and customize the YAML to add your Slack Webhook
-$ kubectl --namespace infrastructure apply https://devops-nirvana.s3.amazonaws.com/helm-charts/volume-autoscaler-1.0.1.yaml
+$ kubectl --namespace infrastructure apply https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.1.yaml
 
 # OR, IF YOU NEED TO CHANGE THE NAMESPACE...
 # #1: Download the yaml...
-$ wget https://devops-nirvana.s3.amazonaws.com/helm-charts/volume-autoscaler-1.0.1.yaml
+$ wget https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.1.yaml
 # #1: Or download with curl
-$ curl https://devops-nirvana.s3.amazonaws.com/helm-charts/volume-autoscaler-1.0.1.yaml -o volume-autoscaler-1.0.1.yaml
+$ curl https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.1.yaml -o volume-autoscaler-1.0.1.yaml
 # #2: Then replace the namespace in this, replacing
 cat volume-autoscaler-1.0.1.yaml | sed 's/"infrastructure"/"PROMETHEUS_NAMESPACE_HERE"/g' > ./to_be_applied.yaml
 # #3: If you wish to have slack notifications, edit this to_be_applied.yaml and embed your webhook on the value: line for SLACK_WEBHOOK

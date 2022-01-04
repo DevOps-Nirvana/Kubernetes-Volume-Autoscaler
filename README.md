@@ -2,6 +2,8 @@
 
 This repository contains a service that automatically increases the size of a Persistent Volume Claim in Kubernetes when its nearing full.  Initially engineered based on AWS EKS, this should support any Kubernetes cluster or cloud provider which supports dynamically resizing storage volumes in Kubernetes.
 
+Keeping your volumes at a minimal size can help reduce cost, but having to manually scale them up can be painful and a waste of time for an DevOps / Systems Administrator.
+
 
 ## Requirements
 
@@ -44,7 +46,7 @@ kubectl delete storageclass standard
 kubectl apply -f https://raw.githubusercontent.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/master/examples/gp3-default-encrypt-retain-allowExpansion-storageclass.yaml
 ```
 
-### Installation with Helm
+## Installation with Helm
 
 Now that your cluster has a `StorageClass` which supports expansion, you can install the Volume Autoscaler
 
@@ -68,7 +70,7 @@ helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
   --set "slack_channel=my-slack-channel-name"
 ```
 
-#### Advanced helm usage...
+### Advanced helm usage...
 ```bash
 # To update your local knowledge of remote repos, you may need to do this before upgrading...
 helm repo update
@@ -85,7 +87,7 @@ helm uninstall volume-autoscaler
 ```
 
 
-### (Alternate) Installation with `kubectl`
+## (Alternate) Installation with `kubectl`
 
 ```bash
 # This simple installation will work as long as you put this in the same namespace as Prometheus
@@ -107,7 +109,7 @@ cat volume-autoscaler-1.0.1.yaml | sed 's/"infrastructure"/"PROMETHEUS_NAMESPACE
 kubectl --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE apply ./to_be_applied.yaml
 ```
 
-### Validation
+## Validation
 
 To confirm the volume autoscaler is working properly this repo has an example which you can apply to your Kubernetes cluster which is an PVC and a pod which uses that PVC and fills the disk up constantly.  To do this...
 
@@ -118,10 +120,52 @@ kubectl apply -f https://raw.githubusercontent.com/DevOps-Nirvana/Kubernetes-Vol
 Then if you'd like to follow-along, "follow" the logs of your volume autoscaler to watch it detect full disk and scale up.
 
 
+## Per-Volume Configuration / Annotations
+
+This controller also supports tweaking your volume-autoscaler configuration per-PVC with annotations.  The annotations supported are...
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sample-volume-claim
+  annotations:
+    # This is when we want to scale up after the disk is this percentage (out of 100) full
+    volume.autoscaler.kubernetes.io/scale-above-percent: "80"   # 80 is the default value
+    # This is how many intervals must go by above the scale-above-percent before triggering an autoscale action
+    volume.autoscaler.kubernetes.io/scale-after-intervals: "5"  # 5 is this default value
+    # This is how much to scale a disk up by, in percentage of the current size.
+    #   Eg: If this is set to "10" and the disk is 100GB, it will scale to 110GB
+    #   At larger disk sizes you may want to set this on your PVCs to like "5" or "10"
+    volume.autoscaler.kubernetes.io/scale-up-percent: "50"      # 50 (percent) is the default value
+    # This is the smallest increment to scale up by.  This helps when the disks are very small, and helps hit the minimum increment value per-provider (this is 1GB on AWS)
+    volume.autoscaler.kubernetes.io/scale-up-min-increment: "1000000000"  # 1GB by default (in bytes)
+    # This is the largest disk size ever allowed for this tool to scale up to.  This is set to 16TB by default, because that's the limit of AWS EBS
+    volume.autoscaler.kubernetes.io/scale-up-max-size: "16000000000000"  # 16TB by default (in bytes)
+    # How long (in seconds) we must wait before scaling this volume again.  For AWS EBS, this is 6 hours which is 21600 seconds but for good measure we add an extra 10 minutes to this, so 22200
+    volume.autoscaler.kubernetes.io/scale-cooldown-time: "22200"  
+    # If you want the autoscaler to completely ignore/skip this PVC, set this to "true"
+    volume.autoscaler.kubernetes.io/ignore: "false"  
+    # Finally, Do not set this, and if you see this ignore this, this is how Volume Autoscaler keeps its "state"
+    volume.autoscaler.kubernetes.io/last-resized-at: "123123123"  # This will be an Unix epoch timestamp
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard
+```
+
+
 # TODO
 
 This todo list is mostly for the Author(s), but any contributions are also welcome.  Please [submit an Issue](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/issues) for issues or requests, or an [Pull Request](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/pulls) if you added some code.
 
+* Make helm chart able to customize the prometheus label selector
+* Add scale up max increment
+* Make log have more full (simplified) data about disks (max size, usage, etc, for debugging purposes)
+* Add dry-run as top-level arg to easily adjust, add to examples on this README
 * Push to helm repo in a Github Action and push the static yaml as well
 * Add tests coverage to ensure the software works as intended moving forward
 * Do some load testing to see how well this software deals with scale (100+ PVs, 500+ PVs, etc)

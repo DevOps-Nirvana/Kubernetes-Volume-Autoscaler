@@ -17,32 +17,34 @@ This repository contains a service that automatically increases the size of a Pe
 $ helm repo add devops-nirvana https://devops-nirvana.s3.amazonaws.com/helm-charts/
 
 # Example 1 - Using autodiscovery, must be in the same namespace as Prometheus
-$ helm install volume-autoscaler devops-nirvana/volume-autoscaler \
+$ helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
   --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE
 
 # Example 2 - Manually setting where Prometheus is
-$ helm install volume-autoscaler devops-nirvana/volume-autoscaler \
+$ helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
   --set "prometheus_url=http://prometheus-server.namespace.svc.cluster.local"
 
-# Example 3 - Full Example, manually setting where Prometheus is and having slack notifications
-$ helm install volume-autoscaler devops-nirvana/volume-autoscaler \
-  --namespace NAMESPACE_FOR_VOLUME_AUTOSCALER \
+# Example 3 - Full and recommended example, automatically detect Prometheus and use slack notifications
+$ helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
+  --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE \
   --set "slack_webhook_url=https://hooks.slack.com/services/123123123/4564564564/789789789789789789" \
-  --set "slack_channel=my-slack-channel-name" \
-  --set "prometheus_url=http://prometheus-server.namespace.svc.cluster.local"
+  --set "slack_channel=my-slack-channel-name"
 ```
 
 Advanced helm usage...
 ```bash
+# To update your local knowledge of remote repos, you may need to do this before upgrading...
+$ helm repo update
+
 # To view what changes it will make, if you change things, this requires the helm diff plugin - https://github.com/databus23/helm-diff
-helm diff upgrade volume-autoscaler --allow-unreleased devops-nirvana/volume-autoscaler \
+$ helm diff upgrade volume-autoscaler --allow-unreleased devops-nirvana/volume-autoscaler \
   --namespace infrastructure \
   --set "slack_webhook_url=https://hooks.slack.com/services/123123123/4564564564/789789789789789789" \
   --set "slack_channel=my-slack-channel-name" \
   --set "prometheus_url=http://prometheus-server.namespace.svc.cluster.local"
 
 # To remove the service, simply run...
-helm uninstall volume-autoscaler
+$ helm uninstall volume-autoscaler
 ```
 
 

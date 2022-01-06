@@ -160,6 +160,8 @@ spec:
 
 # TODO
 
+Current Release: 1.0.1
+
 This todo list is mostly for the Author(s), but any contributions are also welcome.  Please [submit an Issue](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/issues) for issues or requests, or an [Pull Request](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/pulls) if you added some code.
 
 * Make helm chart able to customize the prometheus label selector

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+HASH="$(git rev-parse HEAD)"
+docker tag $IMAGE_NAME $DOCKER_REPO:$HASH
+docker push $DOCKER_REPO:$HASH

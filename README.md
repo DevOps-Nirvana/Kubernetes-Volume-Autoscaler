@@ -166,6 +166,7 @@ Release: 1.0.2
 Automatically detecting version of Prometheus and using newer functions to de-bounce invalid PVCs automatically
 Adding max-increment annotation/variable support
 Adding exception handling in our main loop to handle jitter nicely and not fail catastrophically if someone has bad PVC annotations
+Making all variables settable by a value in the helm chart
 ```
 
 Release: 1.0.1
@@ -183,9 +184,7 @@ Current Release: 1.0.1
 
 This todo list is mostly for the Author(s), but any contributions are also welcome.  Please [submit an Issue](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/issues) for issues or requests, or an [Pull Request](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/pulls) if you added some code.
 
-* Make helm chart able to customize the prometheus label selector
 * Make log have more full (simplified) data about disks (max size, usage, etc, for debugging purposes)
-* Add dry-run as top-level arg to easily adjust, add to examples on this README
 * Push to helm repo in a Github Action and push the static yaml as well
 * Add tests coverage to ensure the software works as intended moving forward
 * Do some load testing to see how well this software deals with scale (100+ PVs, 500+ PVs, etc)

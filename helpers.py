@@ -6,8 +6,13 @@ from packaging import version
 
 # Used below in init variables
 def detectPrometheusURL():
+
+    # Method #1: Use env vars which are set when run in the same namespace as prometheus
     prometheus_ip_address = os.getenv('PROMETHEUS_SERVER_SERVICE_HOST')
     prometheus_port = os.getenv('PROMETHEUS_SERVER_SERVICE_PORT_HTTP')
+
+    # TODO: If there's other ways to also detect prometheus (eg: try http://prometheus-server) please put them here...
+
     if not prometheus_ip_address or not prometheus_port:
         print("ERROR: PROMETHEUS_URL was not set, and can not auto-detect where prometheus is")
         exit(-1)
@@ -25,7 +30,7 @@ SCALE_COOLDOWN_TIME = int(os.getenv('SCALE_COOLDOWN_TIME') or 22200)            
 PROMETHEUS_URL = os.getenv('PROMETHEUS_URL') or detectPrometheusURL()               # Where prometheus is, if not provided it can auto-detect it if it's in the same namespace as us
 DRY_RUN = True if os.getenv('DRY_RUN', False) else False                            # If we want to dry-run this
 PROMETHEUS_LABEL_MATCH = os.getenv('PROMETHEUS_LABEL_MATCH') or ''                  # A PromQL label query to restrict volumes for this to see and scale, without braces.  eg: 'namespace="dev"'
-HTTP_TIMEOUT = os.getenv('HTTP_TIMEOUT') or 5                                       # Allows to set the timeout for calls to Prometheus and Kubernetes.  This might be needed if your Prometheus or Kubernetes is over a remote WAN link with high latency and/or is heavily loaded
+HTTP_TIMEOUT = os.getenv('HTTP_TIMEOUT') or 15                                      # Allows to set the timeout for calls to Prometheus and Kubernetes.  This might be needed if your Prometheus or Kubernetes is over a remote WAN link with high latency and/or is heavily loaded
 PROMETHEUS_VERSION = "Unknown"                                                      # Uses to detect the availability of a new function called present_over_time only available on Prometheus v2.30.0 or newer, this is auto-detected and updated, not set by a user
 
 
@@ -33,9 +38,11 @@ PROMETHEUS_VERSION = "Unknown"                                                  
 # Initialize Kubernetes
 #############################
 try:
+    # First, try to use in-cluster config, aka run inside of Kubernetes
     kubernetes.config.load_incluster_config()
 except Exception as e:
     try:
+        # If we aren't running in kubernetes, try to use the kubectl config file as a fallback
         kubernetes.config.load_kube_config()
     except Exception as ex:
         raise ex

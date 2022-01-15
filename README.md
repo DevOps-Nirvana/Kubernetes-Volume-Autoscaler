@@ -140,6 +140,9 @@ metadata:
     volume.autoscaler.kubernetes.io/scale-up-percent: "50"      # 50 (percent) is the default value
     # This is the smallest increment to scale up by.  This helps when the disks are very small, and helps hit the minimum increment value per-provider (this is 1GB on AWS)
     volume.autoscaler.kubernetes.io/scale-up-min-increment: "1000000000"  # 1GB by default (in bytes)
+    # This is the maximum increment to scale up by.  This helps when the disks are very LARGE, to prevent them from growing too much at a time.
+    #   This can be used instead of or in addition to scale-up-percent
+    volume.autoscaler.kubernetes.io/scale-up-max-increment: ""  # Unset by default(in "bytes")
     # This is the largest disk size ever allowed for this tool to scale up to.  This is set to 16TB by default, because that's the limit of AWS EBS
     volume.autoscaler.kubernetes.io/scale-up-max-size: "16000000000000"  # 16TB by default (in bytes)
     # How long (in seconds) we must wait before scaling this volume again.  For AWS EBS, this is 6 hours which is 21600 seconds but for good measure we add an extra 10 minutes to this, so 22200
@@ -157,6 +160,21 @@ spec:
   storageClassName: standard
 ```
 
+# Release History
+Release: 1.0.2
+```
+Automatically detecting version of Prometheus and using newer functions to de-bounce invalid PVCs automatically
+Adding max-increment annotation/variable support
+```
+
+Release: 1.0.1
+```
+Initial Public Release
+Basic PVC Annotation support
+Publishing a Helm Chart
+A few variables configurable in the Helm Chart values
+Some basic documentation and installation help/guides
+```
 
 # TODO
 
@@ -165,7 +183,6 @@ Current Release: 1.0.1
 This todo list is mostly for the Author(s), but any contributions are also welcome.  Please [submit an Issue](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/issues) for issues or requests, or an [Pull Request](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/pulls) if you added some code.
 
 * Make helm chart able to customize the prometheus label selector
-* Add scale up max increment
 * Make log have more full (simplified) data about disks (max size, usage, etc, for debugging purposes)
 * Add dry-run as top-level arg to easily adjust, add to examples on this README
 * Push to helm repo in a Github Action and push the static yaml as well

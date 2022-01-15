@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
             # Precursor check to ensure we have info for this pvc in kubernetes object
             if volume_description not in pvcs_in_kubernetes:
-                print("  ERROR: The volume {} was not found in Kubernetes, either it was just deleted or some random jitter is occurring.  If this continues to occur, please report an bug".format(volume_description))
+                print("  ERROR: The volume {} was not found in Kubernetes but had metrics in Prometheus.  This may be an old volume, was just deleted, or some random jitter is occurring.  If this continues to occur, please report an bug".format(volume_description))
             else:
 
                 # Check if we are in an alert condition
@@ -65,10 +65,14 @@ if __name__ == "__main__":
                             resize_to_bytes = calculateBytesToScaleTo(
                                 original_size     = pvcs_in_kubernetes[volume_description]['volume_size_status_bytes'],
                                 scale_up_percent  = pvcs_in_kubernetes[volume_description]['scale_up_percent'],
-                                minimum_increment = pvcs_in_kubernetes[volume_description]['scale_up_min_increment'],
+                                min_increment     = pvcs_in_kubernetes[volume_description]['scale_up_min_increment'],
+                                max_increment     = pvcs_in_kubernetes[volume_description]['scale_up_max_increment'],
                                 maximum_size      = pvcs_in_kubernetes[volume_description]['scale_up_max_size'],
                             )
                             # TODO: Check if storage class has the ALLOWVOLUMEEXPANSION flag set to true, read the SC from pvcs_in_kubernetes[volume_description]['storage_class']
+                            if resize_to_bytes == False:
+                                print("  Error/Exception while trying to determine what to resize to")
+                                continue
 
                             # Check if we are already at the max volume size (either globally, or this-volume specific)
                             if resize_to_bytes == pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']:

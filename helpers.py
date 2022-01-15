@@ -2,6 +2,7 @@ import os
 import time
 import requests
 import kubernetes
+from packaging import version
 
 # Used below in init variables
 def detectPrometheusURL():
@@ -13,17 +14,19 @@ def detectPrometheusURL():
     return "http://{}:{}".format(prometheus_ip_address,prometheus_port)
 
 # Input/configuration variables
-INTERVAL_TIME = int(os.getenv('INTERVAL_TIME') or 60)                           # How often (in seconds) to scan prometheus for checking if we need to resize
-SCALE_ABOVE_PERCENT = int(os.getenv('SCALE_ABOVE_PERCENT') or 80)               # What percent out of 100 the volume must be consuming before considering to scale it
-SCALE_AFTER_INTERVALS = int(os.getenv('SCALE_AFTER_INTERVALS') or 5)            # How many intervals of INTERVAL_TIME a volume must be above SCALE_ABOVE_PERCENT before we scale
-SCALE_UP_PERCENT = int(os.getenv('SCALE_UP_PERCENT') or 50)                     # How much percent of the current volume size to scale up by.  eg: 100 == (if disk is 10GB, scale to 20GB), eg: 50 == (if disk is 10GB, scale to 15GB)
-SCALE_UP_MIN_INCREMENT = int(os.getenv('SCALE_UP_MIN_INCREMENT') or 1000000000) # How many bytes is the minimum that we can resize up by, default is 1GB (in bytes, so 1000000000)
-SCALE_UP_MAX_SIZE = int(os.getenv('SCALE_UP_MAX_SIZE') or 16000000000000)       # How many bytes is the maximum disk size that we can resize up, default is 16TB for EBS volumes in AWS (in bytes, so 16000000000000)
-SCALE_COOLDOWN_TIME = int(os.getenv('SCALE_COOLDOWN_TIME') or 22200)            # How long (in seconds) we must wait before scaling this volume again.  For AWS EBS, this is 6 hours which is 21600 seconds but for good measure we add an extra 10 minutes to this, so 22200
-PROMETHEUS_URL = os.getenv('PROMETHEUS_URL') or detectPrometheusURL()           # Where prometheus is, if not provided it can auto-detect it if it's in the same namespace as us
-DRY_RUN = True if os.getenv('DRY_RUN', False) else False                        # If we want to dry-run this
-PROMETHEUS_LABEL_MATCH = os.getenv('PROMETHEUS_LABEL_MATCH') or ''              # A PromQL label query to restrict volumes for this to see and scale, without braces.  eg: 'namespace="dev"'
-HTTP_TIMEOUT = os.getenv('HTTP_TIMEOUT') or 5                                   # Allows to set the timeout for calls to Prometheus and Kubernetes.  This might be needed if your Prometheus or Kubernetes is over a remote WAN link with high latency and/or is heavily loaded
+INTERVAL_TIME = int(os.getenv('INTERVAL_TIME') or 60)                               # How often (in seconds) to scan prometheus for checking if we need to resize
+SCALE_ABOVE_PERCENT = int(os.getenv('SCALE_ABOVE_PERCENT') or 80)                   # What percent out of 100 the volume must be consuming before considering to scale it
+SCALE_AFTER_INTERVALS = int(os.getenv('SCALE_AFTER_INTERVALS') or 5)                # How many intervals of INTERVAL_TIME a volume must be above SCALE_ABOVE_PERCENT before we scale
+SCALE_UP_PERCENT = int(os.getenv('SCALE_UP_PERCENT') or 50)                         # How much percent of the current volume size to scale up by.  eg: 100 == (if disk is 10GB, scale to 20GB), eg: 50 == (if disk is 10GB, scale to 15GB)
+SCALE_UP_MIN_INCREMENT = int(os.getenv('SCALE_UP_MIN_INCREMENT') or 1000000000)     # How many bytes is the minimum that we can resize up by, default is 1GB (in bytes, so 1000000000)
+SCALE_UP_MAX_INCREMENT = int(os.getenv('SCALE_UP_MAX_INCREMENT') or 16000000000000) # How many bytes is the maximum that we can resize up by, default is 16TB (in bytes, so 16000000000000)
+SCALE_UP_MAX_SIZE = int(os.getenv('SCALE_UP_MAX_SIZE') or 16000000000000)           # How many bytes is the maximum disk size that we can resize up, default is 16TB for EBS volumes in AWS (in bytes, so 16000000000000)
+SCALE_COOLDOWN_TIME = int(os.getenv('SCALE_COOLDOWN_TIME') or 22200)                # How long (in seconds) we must wait before scaling this volume again.  For AWS EBS, this is 6 hours which is 21600 seconds but for good measure we add an extra 10 minutes to this, so 22200
+PROMETHEUS_URL = os.getenv('PROMETHEUS_URL') or detectPrometheusURL()               # Where prometheus is, if not provided it can auto-detect it if it's in the same namespace as us
+DRY_RUN = True if os.getenv('DRY_RUN', False) else False                            # If we want to dry-run this
+PROMETHEUS_LABEL_MATCH = os.getenv('PROMETHEUS_LABEL_MATCH') or ''                  # A PromQL label query to restrict volumes for this to see and scale, without braces.  eg: 'namespace="dev"'
+HTTP_TIMEOUT = os.getenv('HTTP_TIMEOUT') or 5                                       # Allows to set the timeout for calls to Prometheus and Kubernetes.  This might be needed if your Prometheus or Kubernetes is over a remote WAN link with high latency and/or is heavily loaded
+PROMETHEUS_VERSION = "1.0.0"                                                        # Uses to detect the availability of a new function called present_over_time only available on Prometheus v2.30.0 or newer, this is auto-detected and updated, not set by a user
 
 
 #############################
@@ -50,10 +53,11 @@ def printHeaderAndConfiguration():
     print("             Prometheus URL: {}".format(PROMETHEUS_URL))
     print("          Prometheus Labels: {{{}}}".format(PROMETHEUS_LABEL_MATCH))
     print("    Interval to query usage: every {} seconds".format(INTERVAL_TIME))
+    print("             Scale up after: {} intervals ({} seconds total)".format(SCALE_AFTER_INTERVALS, SCALE_AFTER_INTERVALS * INTERVAL_TIME))
     print("     Scale above percentage: disk is over {}% full".format(SCALE_ABOVE_PERCENT))
     print(" Scale up minimum increment: {} bytes, or {}".format(SCALE_UP_MIN_INCREMENT, convert_bytes_to_storage(SCALE_UP_MIN_INCREMENT)))
+    print(" Scale up maximum increment: {} bytes, or {}".format(SCALE_UP_MAX_INCREMENT, convert_bytes_to_storage(SCALE_UP_MAX_INCREMENT)))
     print("      Scale up maximum size: {} bytes, or {}".format(SCALE_UP_MAX_SIZE, convert_bytes_to_storage(SCALE_UP_MAX_SIZE)))
-    print("             Scale up after: {} intervals ({} seconds total)".format(SCALE_AFTER_INTERVALS, SCALE_AFTER_INTERVALS * INTERVAL_TIME))
     print("        Scale up percentage: {}% of current disk size".format(SCALE_UP_PERCENT))
     print("          Scale up cooldown: only resize every {} seconds".format(SCALE_COOLDOWN_TIME))
     print("                    Dry Run: is {}".format("ENABLED, no scaling will occur!" if DRY_RUN else "Disabled"))
@@ -61,23 +65,33 @@ def printHeaderAndConfiguration():
 
 
 # Figure out how many bytes to scale to based on the original size, scale up percent, minimum increment and maximum size
-def calculateBytesToScaleTo(original_size, scale_up_percent, minimum_increment, maximum_size):
-    resize_to_bytes = int((original_size * (0.01 * scale_up_percent)) + original_size)
-    # Check if resize bump is too small
-    if resize_to_bytes - original_size < minimum_increment:
-        # Using default scale up if too small
-        resize_to_bytes = original_size + minimum_increment
+def calculateBytesToScaleTo(original_size, scale_up_percent, min_increment, max_increment, maximum_size):
+    try:
+        resize_to_bytes = int((original_size * (0.01 * scale_up_percent)) + original_size)
+        # Check if resize bump is too small
+        if resize_to_bytes - original_size < min_increment:
+            # Using default scale up if too small
+            resize_to_bytes = original_size + min_increment
 
-    # Now check if it is too large
-    if resize_to_bytes > maximum_size:
-        resize_to_bytes = maximum_size
+        # Check if resize bump is too large
+        if resize_to_bytes - original_size > max_increment:
+            # Using default scale up if too large
+            resize_to_bytes = original_size + max_increment
 
-    # Now check if we're already maxed (16TB?)
-    if original_size == resize_to_bytes:
+        # Now check if it is too large overall (max disk size)
+        if resize_to_bytes > maximum_size:
+            resize_to_bytes = maximum_size
+
+        # Now check if we're already maxed (16TB?) then we don't need to complete this scale activity
+        if original_size == resize_to_bytes:
+            return False
+
+        # If we're good, send back our resizeto byets
+        return resize_to_bytes
+    except Exception as e:
+        print("Exception, unable to calculate bytes to scale to: ")
+        print(e)
         return False
-
-    # If we're good, send back our resizeto byets
-    return resize_to_bytes
 
 
 # Convert the K8s storage size definitions (eg: 10G, 5Ti, etc) into number of bytes
@@ -219,6 +233,7 @@ def convert_pvc_to_simpler_dict(pvc):
     return_dict['scale_after_intervals']  = SCALE_AFTER_INTERVALS
     return_dict['scale_up_percent']       = SCALE_UP_PERCENT
     return_dict['scale_up_min_increment'] = SCALE_UP_MIN_INCREMENT
+    return_dict['scale_up_max_increment'] = SCALE_UP_MAX_INCREMENT
     return_dict['scale_up_max_size']      = SCALE_UP_MAX_SIZE
     return_dict['scale_cooldown_time']    = SCALE_COOLDOWN_TIME
     return_dict['ignore']                 = False
@@ -234,6 +249,8 @@ def convert_pvc_to_simpler_dict(pvc):
         return_dict['scale_up_percent'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-up-percent'])
     if 'volume.autoscaler.kubernetes.io/scale-up-min-increment' in pvc.metadata.annotations:
         return_dict['scale_up_min_increment'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-up-min-increment'])
+    if 'volume.autoscaler.kubernetes.io/scale-up-max-increment' in pvc.metadata.annotations:
+        return_dict['scale_up_max_increment'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-up-max-increment'])
     if 'volume.autoscaler.kubernetes.io/scale-up-max-size' in pvc.metadata.annotations:
         return_dict['scale_up_max_size'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-up-max-size'])
     if 'volume.autoscaler.kubernetes.io/scale-cooldown-time' in pvc.metadata.annotations:
@@ -286,22 +303,29 @@ def scale_up_pvc(namespace, name, new_size):
         print(e)
         return False
 
-
-# Test if prometheus is accessible
+# Test if prometheus is accessible, and gets the build version so we know which function(s) are available or not, primarily for present_over_time below
 def testIfPrometheusIsAccessible(url):
+    global PROMETHEUS_VERSION
     try:
-        response = requests.get(url, timeout=HTTP_TIMEOUT)
+        response = requests.get(url + '/api/v1/status/buildinfo', timeout=HTTP_TIMEOUT)
         if response.status_code != 200:
             raise Exception("ERROR: Received status code {} while trying to initialize on Prometheus: {}".format(response.status_code, url))
+        response_object = response.json()
+        PROMETHEUS_VERSION = response_object['data']['version']
+        print("Detected Prometheus Version: {}".format(PROMETHEUS_VERSION))
     except Exception as e:
         print(e)
         exit(-1)
 
-
 # Get a list of PVCs from Prometheus with their metrics of disk usage
 def fetch_pvcs_from_prometheus(url, label_match):
     print("Querying prometheus...")
-    response = requests.get(url + '/api/v1/query', params={'query': "ceil((1 - kubelet_volume_stats_available_bytes{{ {} }} / kubelet_volume_stats_capacity_bytes)*100)".format(label_match)}, timeout=HTTP_TIMEOUT)
+    # This only works on Prometheus v2.30.0 or newer, using this helps prevent false-negatives
+    if version.parse(PROMETHEUS_VERSION) >= version.parse("2.30.0"):
+        response = requests.get(url + '/api/v1/query', params={'query': "ceil((1 - kubelet_volume_stats_available_bytes{{ {} }} / kubelet_volume_stats_capacity_bytes)*100) and present_over_time(kubelet_volume_stats_available_bytes{{ {} }}[1h])".format(label_match,label_match)}, timeout=HTTP_TIMEOUT)
+    else:
+        response = requests.get(url + '/api/v1/query', params={'query': "ceil((1 - kubelet_volume_stats_available_bytes{{ {} }} / kubelet_volume_stats_capacity_bytes)*100)".format(label_match,label_match)}, timeout=HTTP_TIMEOUT)
+
     response_object = response.json()
 
     if response_object['status'] != 'success':

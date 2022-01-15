@@ -55,54 +55,54 @@ globalEnvs:
 
   # This is how we we can deploy this chart to a different namespace (or cluster) than Prometheus, by telling it where to access Prometheus
   - name: PROMETHEUS_URL
-    value: "{{ default "" .Values.prometheus_url }}"
+    value: "{{ .Values.prometheus_url }}"
 
   # This is how we confiure the Slack integration, set the two values below
   - name: SLACK_WEBHOOK_URL
-    value: "{{ default "REPLACEME" .Values.slack_webhook_url }}"
+    value: "{{ .Values.slack_webhook_url }}"
   - name: SLACK_CHANNEL
-    value: "{{ default "REPLACEME" .Values.slack_channel }}"
+    value: "{{ .Values.slack_channel }}"
 
   # Our scan interval
   - name: INTERVAL_TIME
-    value: "{{ default "60" .Values.interval_time }}"
+    value: "{{ .Values.interval_time }}"
   # How many scan intervals in alert before scaling
   - name: SCALE_AFTER_INTERVALS
-    value: "{{ default "5" .Values.scale_after_intervals }}"
+    value: "{{  .Values.scale_after_intervals }}"
 
   # How much full the disk must be before considering scaling
   - name: SCALE_ABOVE_PERCENT
-    value: "{{ default "80" .Values.scale_above_percent }}"
+    value: "{{ .Values.scale_above_percent }}"
 
   # How much to scale disks up by, as a percentage of their current size
   - name: SCALE_UP_PERCENT
-    value: "{{ default "50" .Values.scale_up_percent }}"
+    value: "{{ .Values.scale_up_percent }}"
 
   # An minimum amount of bytes to scale up by (typically because providers like AWS only support 1GB increments in disk size)
   - name: SCALE_UP_MIN_INCREMENT
-    value: "{{ default "1000000000" .Values.scale_up_min_increment }}"
+    value: "{{ .Values.scale_up_min_increment }}"
   # An maximum amount of bytes to scale up by (helps prevent large disks from growing too fast/exponentially).  Set to 16TB by default, which basically means this is disabled
   - name: SCALE_UP_MAX_INCREMENT
-    value: "{{ default "16000000000000" .Values.scale_up_max_increment }}"
+    value: "{{ .Values.scale_up_max_increment }}"
   # The maximum size of disks to scale up to.  By default on AWS using EBS volumes this is set to 16TB as that is the EBS Max disk size.
   - name: SCALE_UP_MAX_SIZE
-    value: "{{ default "16000000000000" .Values.scale_up_max_size }}"
+    value: "{{ .Values.scale_up_max_size }}"
   # How long to wait inbetween scaling activities.  AWS restricts you to one resize per-disk per 6 hour period, so this is 6 hours plus 10 minutes (as a buffer)
   - name: SCALE_COOLDOWN_TIME
-    value: "{{ default "22200" .Values.scale_cooldown_time }}"
+    value: "{{ .Values.scale_cooldown_time }}"
   # Set this to "true" to only print what it would have done, it will not send Slack messages either if you enable this
   - name: DRY_RUN
-    value: "{{ default "" .Values.dry_run }}"
+    value: "{{ .Values.dry_run }}"
   # What label selector to query on prometheus to limit the volumes you wish to use.  For example set this to "namespace=\"production\"" to limit to PVCs in production namespace
   - name: PROMETHEUS_LABEL_MATCH
-    value: "{{ default "" .Values.prometheus_label_match }}"
+    value: "{{ .Values.prometheus_label_match }}"
   # How long to wait for Prometheus and Kubernetes to get back to us for all API calls
   - name: HTTP_TIMEOUT
-    value: "{{ default "15" .Values.http_timeout }}"
+    value: "{{ .Values.http_timeout }}"
 
   # How verbose to be during runtime.  Off by default, when enabled it prints every volume and their specifications on every iteration.  Recommended for testing/development and/or dry-runs
   - name: VERBOSE
-    value: "{{ default "false" .Values.verbose }}"
+    value: "{{ .Values.verbose }}"
 
 
 # Additional pod annotations

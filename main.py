@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 import time
-from helpers import INTERVAL_TIME, PROMETHEUS_URL, DRY_RUN, PROMETHEUS_LABEL_MATCH
+from helpers import INTERVAL_TIME, PROMETHEUS_URL, DRY_RUN
 from helpers import convert_bytes_to_storage, scale_up_pvc, testIfPrometheusIsAccessible, describe_all_pvcs
 from helpers import fetch_pvcs_from_prometheus, printHeaderAndConfiguration, calculateBytesToScaleTo
 import slack
@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
         # Fetch our volume usage from Prometheus
         try:
-            pvcs_in_prometheus = fetch_pvcs_from_prometheus(url=PROMETHEUS_URL, label_match=PROMETHEUS_LABEL_MATCH)
+            pvcs_in_prometheus = fetch_pvcs_from_prometheus(url=PROMETHEUS_URL)
         except Exception as e:
             print("Exception while trying to fetch PVC metrics from prometheus")
             print(e)

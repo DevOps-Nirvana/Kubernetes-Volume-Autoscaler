@@ -325,7 +325,7 @@ def testIfPrometheusIsAccessible(url):
         exit(-1)
 
 # Get a list of PVCs from Prometheus with their metrics of disk usage
-def fetch_pvcs_from_prometheus(url, label_match):
+def fetch_pvcs_from_prometheus(url, label_match=PROMETHEUS_LABEL_MATCH):
     print("Querying prometheus...")
     # This only works on Prometheus v2.30.0 or newer, using this helps prevent false-negatives
     if version.parse(PROMETHEUS_VERSION) >= version.parse("2.30.0"):

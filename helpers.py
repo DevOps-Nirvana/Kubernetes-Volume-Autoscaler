@@ -69,7 +69,7 @@ def printHeaderAndConfiguration():
     print("      Scale up maximum size: {} bytes, or {}".format(SCALE_UP_MAX_SIZE, convert_bytes_to_storage(SCALE_UP_MAX_SIZE)))
     print("        Scale up percentage: {}% of current disk size".format(SCALE_UP_PERCENT))
     print("          Scale up cooldown: only resize every {} seconds".format(SCALE_COOLDOWN_TIME))
-    print("               Verbose Mode: is {}".format("ENABLED, no scaling will occur!" if VERBOSE else "Disabled"))
+    print("               Verbose Mode: is {}".format("ENABLED" if VERBOSE else "Disabled"))
     print("                    Dry Run: is {}".format("ENABLED, no scaling will occur!" if DRY_RUN else "Disabled"))
     print(" HTTP Timeouts for k8s/prom: is {} seconds".format(HTTP_TIMEOUT))
     print("---------------------------------------------------------------")

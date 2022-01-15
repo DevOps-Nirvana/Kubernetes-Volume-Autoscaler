@@ -1,6 +1,8 @@
-# Kubernetes Volume Autoscaler (with Prometheus)
+# Kubernetes Volume Autoscaler (using Prometheus)
 
-This repository contains a service that automatically increases the size of a Persistent Volume Claim in Kubernetes when its nearing full.  Initially engineered based on AWS EKS, this should support any Kubernetes cluster or cloud provider which supports dynamically resizing storage volumes in Kubernetes.
+<a href="https://hub.docker.com/r/devopsnirvana/kubernetes-volume-autoscaler"><img src="https://img.shields.io/docker/pulls/devopsnirvana/kubernetes-volume-autoscaler?style=plastic" alt="Docker Hub Pulls"></a>
+
+This repository contains a service that automatically increases the size of a Persistent Volume Claim in Kubernetes when it is nearing full.  Initially engineered based on AWS EKS, this should support any Kubernetes cluster or cloud provider which supports dynamically resizing storage volumes in Kubernetes.
 
 Keeping your volumes at a minimal size can help reduce cost, but having to manually scale them up can be painful and a waste of time for an DevOps / Systems Administrator.
 
@@ -177,6 +179,7 @@ Adding max-increment annotation/variable support
 Adding exception handling in our main loop to handle jitter nicely and not fail catastrophically if someone has bad PVC annotations
 Making all variables settable by a value in the helm chart
 Adding verbose support, which when enabled prints out full data from the objects detected, and prints out even non-alerting disks
+Printing the number of PVCs found in the log, useful when not in verbose mode
 ```
 
 Release: 1.0.1

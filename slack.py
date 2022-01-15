@@ -38,8 +38,8 @@ def getEmojiFromSeverity(severity):
     else:                           return ':white_check_mark:';
 
 # Default webhook (paste yours here if you want to not have to provide it on the CLI)
-slack_webhook_url = os.getenv('SLACK_WEBHOOK_URL', "")
-slack_channel = os.getenv('SLACK_CHANNEL', "devops")
+SLACK_WEBHOOK_URL = os.getenv('SLACK_WEBHOOK_URL', "")
+SLACK_CHANNEL = os.getenv('SLACK_CHANNEL', "devops")
 
 # Usage and CLI opts handling
 usage = '  \n\
@@ -49,10 +49,10 @@ or \n\
 '
 
 
-def send(body, username="Kubernetes Volume Autoscaler", severity="info", channel=slack_channel, emoji="", iconurl="https://raw.githubusercontent.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/master/icon.png", verbose=False):
+def send(body, username="Kubernetes Volume Autoscaler", severity="info", channel=SLACK_CHANNEL, emoji="", iconurl="https://raw.githubusercontent.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/master/icon.png", verbose=False):
 
-    # Skip if not set
-    if not slack_webhook_url or len(slack_webhook_url) == 0:
+    # Skip if not set or set invalidly
+    if not SLACK_WEBHOOK_URL or len(SLACK_WEBHOOK_URL) == 0 or SLACK_WEBHOOK_URL == "REPLACEME":
         print("Slack webhook URL not set, skipping")
         return False
 
@@ -80,8 +80,8 @@ def send(body, username="Kubernetes Volume Autoscaler", severity="info", channel
     # Send the request to Slack
     try:
         rawpayload = json.dumps(payload).encode('utf-8')
-        if verbose:         print("VERBOSE: Sending request to " + slack_webhook_url + "...")
-        request = urllib.request.Request(slack_webhook_url, rawpayload, {'Content-Type': 'application/json', 'Content-Length': len(rawpayload)})
+        if verbose:         print("VERBOSE: Sending request to " + SLACK_WEBHOOK_URL + "...")
+        request = urllib.request.Request(SLACK_WEBHOOK_URL, rawpayload, {'Content-Type': 'application/json', 'Content-Length': len(rawpayload)})
         response = urllib.request.urlopen(request)
         result = response.read()
         result = str(result)

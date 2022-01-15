@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 import time
-from helpers import INTERVAL_TIME, PROMETHEUS_URL, DRY_RUN, VERBOSE
+from helpers import INTERVAL_TIME, PROMETHEUS_URL, DRY_RUN, VERBOSE, SLACK_WEBHOOK_URL
 from helpers import convert_bytes_to_storage, scale_up_pvc, testIfPrometheusIsAccessible, describe_all_pvcs
 from helpers import fetch_pvcs_from_prometheus, printHeaderAndConfiguration, calculateBytesToScaleTo
 import slack
@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
                 # Precursor check to ensure we have info for this pvc in kubernetes object
                 if volume_description not in pvcs_in_kubernetes:
-                    print("  ERROR: The volume {} was not found in Kubernetes but had metrics in Prometheus.  This may be an old volume, was just deleted, or some random jitter is occurring.  If this continues to occur, please report an bug".format(volume_description))
+                    print("  ERROR: The volume {} was not found in Kubernetes but had metrics in Prometheus.  This may be an old volume, was just deleted, or some random jitter is occurring.  If this continues to occur, please report an bug.  You might also be using an older version of Prometheus, please make sure you're using v2.30.0 or newer before reporting a bug for this.".format(volume_description))
                     continue
 
                 if VERBOSE:
@@ -133,24 +133,29 @@ if __name__ == "__main__":
                 # If we aren't dry-run, lets resize
                 print("  RESIZING disk from {} to {}".format(convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']), convert_bytes_to_storage(resize_to_bytes)))
                 if scale_up_pvc(volume_namespace, volume_name, resize_to_bytes):
-                    slack.send("Successfully scaled up `{}` by `{}%` from `{}` to `{}`, it was using more than `{}%` disk space over the last `{} seconds`".format(
+                    status_output = "Successfully scaled up `{}` by `{}%` from `{}` to `{}`, it was using more than `{}%` disk space over the last `{} seconds`".format(
                         volume_description,
                         pvcs_in_kubernetes[volume_description]['scale_up_percent'],
                         convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']),
                         convert_bytes_to_storage(resize_to_bytes),
                         pvcs_in_kubernetes[volume_description]['scale_above_percent'],
-                        IN_MEMORY_STORAGE[volume_description] * INTERVAL_TIME,
-                    ))
+                        IN_MEMORY_STORAGE[volume_description] * INTERVAL_TIME
+                    )
+                    print(status_output)
+                    if SLACK_WEBHOOK_URL and len(SLACK_WEBHOOK_URL) > 0:
+                        slack.send(status_output)
                 else:
-                    print("  FAILED SCALING UP")
-                    slack.send("FAILED Scaling up `{}` by `{}%` from `{}` to `{}`, it was using more than `{}%` disk space over the last `{} seconds`".format(
+                    status_output = "FAILED Scaling up `{}` by `{}%` from `{}` to `{}`, it was using more than `{}%` disk space over the last `{} seconds`".format(
                         volume_description,
                         pvcs_in_kubernetes[volume_description]['scale_up_percent'],
                         convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']),
                         convert_bytes_to_storage(resize_to_bytes),
                         pvcs_in_kubernetes[volume_description]['scale_above_percent'],
                         IN_MEMORY_STORAGE[volume_description] * INTERVAL_TIME,
-                    ), severity="error")
+                    )
+                    print(status_output)
+                    if SLACK_WEBHOOK_URL and len(SLACK_WEBHOOK_URL) > 0:
+                        slack.send(status_output, severity="error")
 
             except Exception as e:
                 print("Exception caught while trying to process record")

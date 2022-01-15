@@ -198,6 +198,7 @@ Current Release: 1.0.2
 This todo list is mostly for the Author(s), but any contributions are also welcome.  Please [submit an Issue](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/issues) for issues or requests, or an [Pull Request](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/pulls) if you added some code.
 
 * Add full helm chart values documentation markdown table
+* Handle signal from Kubernetes to kill/restart properly/quickly
 * Push to helm repo in a Github Action and push the static yaml as well
 * Add tests coverage to ensure the software works as intended moving forward
 * Do some load testing to see how well this software deals with scale (100+ PVs, 500+ PVs, etc)

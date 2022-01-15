@@ -165,6 +165,7 @@ Release: 1.0.2
 ```
 Automatically detecting version of Prometheus and using newer functions to de-bounce invalid PVCs automatically
 Adding max-increment annotation/variable support
+Adding exception handling in our main loop to handle jitter nicely and not fail catastrophically if someone has bad PVC annotations
 ```
 
 Release: 1.0.1

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 ##########################################################################################
 # This script sends a slack notification based on a custom webhook, and can be run as a CLI
+# or included and used from another python script.  Easy  :)
 # Written by Farley <farley@neonsurge.com>
 ##########################################################################################
 

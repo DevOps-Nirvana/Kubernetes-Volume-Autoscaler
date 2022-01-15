@@ -34,6 +34,8 @@ http_timeout: "15"
 # For debugging
 verbose: "false"
 
+# Pretty much ignore anything below here I'd say, unless you really know what you're doing.  :)
+
 # Number of pods in deployment, we only support 1 running
 replicaCount: 1
 

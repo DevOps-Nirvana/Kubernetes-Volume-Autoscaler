@@ -26,7 +26,7 @@ PROMETHEUS_URL = os.getenv('PROMETHEUS_URL') or detectPrometheusURL()           
 DRY_RUN = True if os.getenv('DRY_RUN', False) else False                            # If we want to dry-run this
 PROMETHEUS_LABEL_MATCH = os.getenv('PROMETHEUS_LABEL_MATCH') or ''                  # A PromQL label query to restrict volumes for this to see and scale, without braces.  eg: 'namespace="dev"'
 HTTP_TIMEOUT = os.getenv('HTTP_TIMEOUT') or 5                                       # Allows to set the timeout for calls to Prometheus and Kubernetes.  This might be needed if your Prometheus or Kubernetes is over a remote WAN link with high latency and/or is heavily loaded
-PROMETHEUS_VERSION = "1.0.0"                                                        # Uses to detect the availability of a new function called present_over_time only available on Prometheus v2.30.0 or newer, this is auto-detected and updated, not set by a user
+PROMETHEUS_VERSION = "Unknown"                                                      # Uses to detect the availability of a new function called present_over_time only available on Prometheus v2.30.0 or newer, this is auto-detected and updated, not set by a user
 
 
 #############################
@@ -51,6 +51,7 @@ def printHeaderAndConfiguration():
     print("               Volume Autoscaler - Configuration               ")
     print("---------------------------------------------------------------")
     print("             Prometheus URL: {}".format(PROMETHEUS_URL))
+    print("         Prometheus Version: {}".format(PROMETHEUS_VERSION))
     print("          Prometheus Labels: {{{}}}".format(PROMETHEUS_LABEL_MATCH))
     print("    Interval to query usage: every {} seconds".format(INTERVAL_TIME))
     print("             Scale up after: {} intervals ({} seconds total)".format(SCALE_AFTER_INTERVALS, SCALE_AFTER_INTERVALS * INTERVAL_TIME))
@@ -312,7 +313,6 @@ def testIfPrometheusIsAccessible(url):
             raise Exception("ERROR: Received status code {} while trying to initialize on Prometheus: {}".format(response.status_code, url))
         response_object = response.json()
         PROMETHEUS_VERSION = response_object['data']['version']
-        print("Detected Prometheus Version: {}".format(PROMETHEUS_VERSION))
     except Exception as e:
         print(e)
         exit(-1)

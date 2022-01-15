@@ -31,6 +31,8 @@ dry_run: ""
 # What label selector to query on prometheus to limit the volumes you wish to use.  For example set this to "namespace=\"production\"" to limit to PVCs in production namespace
 prometheus_label_match: ""
 http_timeout: "15"
+# For debugging
+verbose: "false"
 
 # Number of pods in deployment, we only support 1 running
 replicaCount: 1
@@ -95,6 +97,11 @@ globalEnvs:
   # How long to wait for Prometheus and Kubernetes to get back to us for all API calls
   - name: HTTP_TIMEOUT
     value: "{{ default "15" .Values.http_timeout }}"
+
+  # How verbose to be during runtime.  Off by default, when enabled it prints every volume and their specifications on every iteration.  Recommended for testing/development and/or dry-runs
+  - name: VERBOSE
+    value: "{{ default "false" .Values.verbose }}"
+
 
 # Additional pod annotations
 podAnnotations: {}

@@ -54,7 +54,14 @@ Now that your cluster has a `StorageClass` which supports expansion, you can ins
 # First, setup this repo for your helm
 helm repo add devops-nirvana https://devops-nirvana.s3.amazonaws.com/helm-charts/
 
-# Example Install 1 - Using autodiscovery, must be in the same namespace as Prometheus
+# Example Pre-Install - DRY RUN + VERBOSE, Using auto-discovery, must be in the same namespace as Prometheus
+#   Do this if you want to see what this script "would" do.  To view it, view the logs of this service after you deploy it
+helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
+  --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE \
+  --set "dry_run=true" \
+  --set "verbose=true"
+
+# Example Install 1 - Using auto-discovery, must be in the same namespace as Prometheus
 helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
   --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE
 
@@ -63,7 +70,7 @@ helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
   --namespace ANYWHERE_DOESNT_MATTER \
   --set "prometheus_url=http://prometheus-server.namespace.svc.cluster.local"
 
-# Example 3 - Recommended usage, automatically detect Prometheus and use slack notifications
+# Example 3 - Recommended final usage, auto-discovery and use slack notifications.  NOTE: Check helm-chart/values.yml for other variables you can override globally
 helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
   --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE \
   --set "slack_webhook_url=https://hooks.slack.com/services/123123123/4564564564/789789789789789789" \
@@ -169,6 +176,7 @@ Automatically detecting version of Prometheus and using newer functions to de-bo
 Adding max-increment annotation/variable support
 Adding exception handling in our main loop to handle jitter nicely and not fail catastrophically if someone has bad PVC annotations
 Making all variables settable by a value in the helm chart
+Adding verbose support, which when enabled prints out full data from the objects detected, and prints out even non-alerting disks
 ```
 
 Release: 1.0.1
@@ -186,12 +194,11 @@ Current Release: 1.0.1
 
 This todo list is mostly for the Author(s), but any contributions are also welcome.  Please [submit an Issue](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/issues) for issues or requests, or an [Pull Request](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/pulls) if you added some code.
 
-* Make log have more full (simplified) data about disks (max size, usage, etc, for debugging purposes)
+* Add full helm chart values documentation markdown table
 * Push to helm repo in a Github Action and push the static yaml as well
 * Add tests coverage to ensure the software works as intended moving forward
 * Do some load testing to see how well this software deals with scale (100+ PVs, 500+ PVs, etc)
 * Figure out what type of Memory/CPU is necessary for 500+ PVs, see above
-* Add verbosity levels for print statements, to be able to quiet things down in the logs
 * Generate kubernetes EVENTS when we resize volumes so everyone knows we are doing things, to be a good controller
 * Add badges to the README about CI and about Builds/Deploys
 * Listen/watch to events of the PV/PVC, or listen/read from Prometheus to monitor and ensure the resizing happens, log and/or slack it accordingly

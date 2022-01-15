@@ -32,6 +32,7 @@ DRY_RUN = True if os.getenv('DRY_RUN', False) else False                        
 PROMETHEUS_LABEL_MATCH = os.getenv('PROMETHEUS_LABEL_MATCH') or ''                  # A PromQL label query to restrict volumes for this to see and scale, without braces.  eg: 'namespace="dev"'
 HTTP_TIMEOUT = os.getenv('HTTP_TIMEOUT') or 15                                      # Allows to set the timeout for calls to Prometheus and Kubernetes.  This might be needed if your Prometheus or Kubernetes is over a remote WAN link with high latency and/or is heavily loaded
 PROMETHEUS_VERSION = "Unknown"                                                      # Uses to detect the availability of a new function called present_over_time only available on Prometheus v2.30.0 or newer, this is auto-detected and updated, not set by a user
+VERBOSE = True if os.getenv('VERBOSE', "False").lower() == "true" else False        # If we want to verbose mode
 
 
 #############################

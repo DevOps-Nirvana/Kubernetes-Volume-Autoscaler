@@ -138,10 +138,10 @@ tolerations: []
 initContainers: []
   # - name: volume-mount-hack
   #   image: busybox
-  #   command: ["sh", "-c", "chown -R 1000:1000 /var/chaindata"]
+  #   command: ["sh", "-c", "chown -R 1000:1000 /var/data"]
   #   volumeMounts:
   #    - name: data
-  #      mountPath: /var/chaindata
+  #      mountPath: /var/data
 
 # Additional containers to be added to the pod (eg: add the cloudsql proxy)
 extraContainers: []

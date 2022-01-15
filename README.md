@@ -70,6 +70,8 @@ helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
   --set "slack_channel=my-slack-channel-name"
 ```
 
+There are also various other variables you're able to set as easily as above.  Please see: [values.yaml](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/blob/master/helm-chart/values.yaml#L9) for all the simple values to adjust this service.  In addition, review the rest of that file if you'd like to adjust other things (like resource limits, node selectors, taints/tolerances, adding labels, etc).
+
 ### Advanced helm usage...
 ```bash
 # To update your local knowledge of remote repos, you may need to do this before upgrading...
@@ -190,9 +192,9 @@ This todo list is mostly for the Author(s), but any contributions are also welco
 * Do some load testing to see how well this software deals with scale (100+ PVs, 500+ PVs, etc)
 * Figure out what type of Memory/CPU is necessary for 500+ PVs, see above
 * Add verbosity levels for print statements, to be able to quiet things down in the logs
-* Generate kubernetes EVENTS (add to rbac) so everyone knows we are doing things, to be a good controller
-* Add badges to the README
-* Listen/watch to events of the PV/PVC to monitor and ensure the resizing happens, log and/or slack it accordingly
+* Generate kubernetes EVENTS when we resize volumes so everyone knows we are doing things, to be a good controller
+* Add badges to the README about CI and about Builds/Deploys
+* Listen/watch to events of the PV/PVC, or listen/read from Prometheus to monitor and ensure the resizing happens, log and/or slack it accordingly
 * Test it and add working examples of using this on other cloud providers (Azure / Google Cloud)
 * Make per-PVC annotations to (re)direct Slack to different webhooks and/or different channel(s)
 * Discuss what the ideal "default" amount of time before scaling.  Currently is 5 minutes (5, 60 minute intervals)

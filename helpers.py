@@ -327,8 +327,8 @@ def testIfPrometheusIsAccessible(url):
 
 # Get a list of PVCs from Prometheus with their metrics of disk usage
 def fetch_pvcs_from_prometheus(url, label_match=PROMETHEUS_LABEL_MATCH):
-    print("Querying prometheus...")
-    # This only works on Prometheus v2.30.0 or newer, using this helps prevent false-negatives
+
+    # This only works on Prometheus v2.30.0 or newer, using this helps prevent false-negatives only returning recent pvcs (in the last hour)
     if version.parse(PROMETHEUS_VERSION) >= version.parse("2.30.0"):
         response = requests.get(url + '/api/v1/query', params={'query': "ceil((1 - kubelet_volume_stats_available_bytes{{ {} }} / kubelet_volume_stats_capacity_bytes)*100) and present_over_time(kubelet_volume_stats_available_bytes{{ {} }}[1h])".format(label_match,label_match)}, timeout=HTTP_TIMEOUT)
     else:

@@ -38,6 +38,7 @@ if __name__ == "__main__":
         # Fetch our volume usage from Prometheus
         try:
             pvcs_in_prometheus = fetch_pvcs_from_prometheus(url=PROMETHEUS_URL)
+            print("Querying and found {} valid PVCs to asses in prometheus".format(len(pvcs_in_prometheus)))
         except Exception as e:
             print("Exception while trying to fetch PVC metrics from prometheus")
             print(e)

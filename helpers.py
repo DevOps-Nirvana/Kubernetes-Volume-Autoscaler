@@ -3,7 +3,7 @@ import time                    # Sleep
 import requests                # For making HTTP requests to Prometheus
 import kubernetes              # For talking to the Kubernetes API
 from packaging import version  # For checking if prometheus version is new enough to use a new function present_over_time()
-# import signal                  # For sigkill handling
+import signal                  # For sigkill handling
 
 # Used below in init variables
 def detectPrometheusURL():
@@ -34,6 +34,16 @@ PROMETHEUS_LABEL_MATCH = getenv('PROMETHEUS_LABEL_MATCH') or ''                 
 HTTP_TIMEOUT = int(getenv('HTTP_TIMEOUT', "15")) or 15                           # Allows to set the timeout for calls to Prometheus and Kubernetes.  This might be needed if your Prometheus or Kubernetes is over a remote WAN link with high latency and/or is heavily loaded
 PROMETHEUS_VERSION = "Unknown"                                                   # Used to detect the availability of a new function called present_over_time only available on Prometheus v2.30.0 or newer, this is auto-detected and updated, not set by a user
 VERBOSE = True if getenv('VERBOSE', "false").lower() == "true" else False        # If we want to verbose mode
+
+# This handler helps handle sigkill gracefully
+class GracefulKiller:
+  kill_now = False
+  def __init__(self):
+    signal.signal(signal.SIGINT, self.exit_gracefully)
+    signal.signal(signal.SIGTERM, self.exit_gracefully)
+
+  def exit_gracefully(self, *args):
+    self.kill_now = True
 
 #############################
 # Initialize Kubernetes

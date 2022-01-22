@@ -3,17 +3,15 @@ import os
 import time
 from helpers import INTERVAL_TIME, PROMETHEUS_URL, DRY_RUN, VERBOSE
 from helpers import convert_bytes_to_storage, scale_up_pvc, testIfPrometheusIsAccessible, describe_all_pvcs
-from helpers import fetch_pvcs_from_prometheus, printHeaderAndConfiguration, calculateBytesToScaleTo
+from helpers import fetch_pvcs_from_prometheus, printHeaderAndConfiguration, calculateBytesToScaleTo, GracefulKiller
 import slack
 
 # Other globals
 IN_MEMORY_STORAGE = {}
+MAIN_LOOP_TIME = 1
 
 # Entry point and main application loop
 if __name__ == "__main__":
-
-    # This is here to prevent infinite recursion loops on the include of this file from helpers
-    import helpers
 
     # Test if our prometheus URL works before continuing
     testIfPrometheusIsAccessible(PROMETHEUS_URL)
@@ -23,8 +21,18 @@ if __name__ == "__main__":
     # Reporting our configuration to the end-user
     printHeaderAndConfiguration()
 
-    # Our main run loop
-    while True:
+    # Setup our graceful handling of kubernetes signals
+    killer = GracefulKiller()
+    last_run = 0
+
+    # Our main run loop, now using a signal handler to handle kubernetes signals gracefully (not mid-loop)
+    while not killer.kill_now:
+
+        # If it's not our interval time yet, only run once every INTERVAL_TIME seconds.  This extra bit helps us handle signals gracefully quicker
+        if int(time.time()) - last_run <= INTERVAL_TIME:
+            time.sleep(MAIN_LOOP_TIME)
+            continue
+        last_run = int(time.time())
 
         # In every loop, fetch all our pvcs state from Kubernetes
         try:
@@ -32,7 +40,7 @@ if __name__ == "__main__":
         except Exception as e:
             print("Exception while trying to describe all PVCs")
             print(e)
-            time.sleep(INTERVAL_TIME)
+            time.sleep(MAIN_LOOP_TIME)
             continue
 
         # Fetch our volume usage from Prometheus
@@ -42,7 +50,7 @@ if __name__ == "__main__":
         except Exception as e:
             print("Exception while trying to fetch PVC metrics from prometheus")
             print(e)
-            time.sleep(INTERVAL_TIME)
+            time.sleep(MAIN_LOOP_TIME)
             continue
 
         # Iterate through every item and handle it accordingly
@@ -163,4 +171,7 @@ if __name__ == "__main__":
                 print(e)
 
         # Wait until our next interval
-        time.sleep(INTERVAL_TIME)
+        time.sleep(MAIN_LOOP_TIME)
+
+    print("We were sent a signal handler to kill, exited gracefully")
+    exit(0)

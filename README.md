@@ -173,7 +173,12 @@ spec:
 ```
 
 # Release History
-Release: 1.0.2
+### [Release: 1.0.3 - Jan 23, 2022](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.3)
+```
+Handle signal from Kubernetes to kill/restart properly/quickly
+```
+
+### [Release: 1.0.2 - Jan 15, 2022](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.2)
 ```
 Automatically detecting version of Prometheus and using newer functions to de-bounce invalid PVCs automatically
 Adding max-increment annotation/variable support
@@ -183,7 +188,7 @@ Adding verbose support, which when enabled prints out full data from the objects
 Printing the number of PVCs found in the log, useful when not in verbose mode
 ```
 
-Release: 1.0.1
+### [Release: 1.0.1 - Jan 4, 2022](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.1)
 ```
 Initial Public Release
 Basic PVC Annotation support
@@ -199,11 +204,9 @@ Current Release: 1.0.2
 This todo list is mostly for the Author(s), but any contributions are also welcome.  Please [submit an Issue](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/issues) for issues or requests, or an [Pull Request](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/pulls) if you added some code.
 
 * Add full helm chart values documentation markdown table
-* Handle signal from Kubernetes to kill/restart properly/quickly
 * Push to helm repo in a Github Action and push the static yaml as well
 * Add tests coverage to ensure the software works as intended moving forward
-* Do some load testing to see how well this software deals with scale (100+ PVs, 500+ PVs, etc)
-* Figure out what type of Memory/CPU is necessary for 500+ PVs, see above
+* Do some load testing to see how well this software deals with scale, document how much resources needed for each interval.  (10 PVCs, 100+ PVC, 500 PVC)
 * Generate kubernetes EVENTS when we resize volumes so everyone knows we are doing things, to be a good controller
 * Add badges to the README regarding Github Actions success/failures
 * Listen/watch to events of the PV/PVC, or listen/read from Prometheus to monitor and ensure the resizing happens, log and/or slack it accordingly

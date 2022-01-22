@@ -1,4 +1,9 @@
 #!/bin/bash
+#  Note: This will make builds in Docker Hub automatically also build tags for the SHA sum
+#        which will help testing dockerized new releases before tagging them.  Ideally, this script
+#        should only run on docker build runs against master, but haven't taken the time to make this script
+#        have an "if" conditional inside of it to restrict to that due to lack of time and knowledge of DockerHub's
+#        env variables
 
 HASH="$(git rev-parse HEAD)"
 docker tag $IMAGE_NAME $DOCKER_REPO:$HASH

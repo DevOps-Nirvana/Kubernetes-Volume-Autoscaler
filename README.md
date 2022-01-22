@@ -2,9 +2,9 @@
 
 <a href="https://hub.docker.com/r/devopsnirvana/kubernetes-volume-autoscaler"><img src="https://img.shields.io/docker/pulls/devopsnirvana/kubernetes-volume-autoscaler?style=plastic" alt="Docker Hub Pulls"></a> <a href="https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.2"><img src="https://img.shields.io/docker/v/devopsnirvana/kubernetes-volume-autoscaler/1.0.2?label=Latest%20Release&style=plastic" alt="Latest Release"></a> <a href="https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/stargazers"><img src="https://img.shields.io/github/stars/DevOps-Nirvana/Kubernetes-Volume-Autoscaler?style=social" alt="Stargazers on Github"></a>
 
-This repository contains a service that automatically increases the size of a Persistent Volume Claim in Kubernetes when it is nearing full.  Initially engineered based on AWS EKS, this should support any Kubernetes cluster or cloud provider which supports dynamically resizing storage volumes in Kubernetes.
+This repository contains a [Kubernetes controller](https://kubernetes.io/docs/concepts/architecture/controller/) that automatically increases the size of a Persistent Volume Claim in Kubernetes when it is nearing full.  Initially engineered based on AWS EKS, this should support any Kubernetes cluster or cloud provider which supports dynamically hot-resizing storage volumes in Kubernetes.
 
-Keeping your volumes at a minimal size can help reduce cost, but having to manually scale them up can be painful and a waste of time for an DevOps / Systems Administrator.
+Keeping your volumes at a minimal size can help reduce cost, but having to manually scale them up can be painful and a waste of time for an DevOps / Systems Administrator.  This is often used on storage volumes against things in Kubernetes such as [Prometheus](https://prometheus.io), [MySQL](https://artifacthub.io/packages/helm/bitnami/mysql), [Redis](https://artifacthub.io/packages/helm/bitnami/redis), etc.
 
 
 ## Requirements
@@ -127,9 +127,10 @@ To confirm the volume autoscaler is working properly this repo has an example wh
 ```bash
 # Simply run this on your terminal
 kubectl apply -f https://raw.githubusercontent.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/master/examples/simple-pod-with-pvc.yaml
+# Then if you'd like to follow-along, "follow" the logs of your volume autoscaler pod to watch it detect full disk and scale up.
+kubectl get pods | grep -i volume-autoscaler
+kubectl logs --since=10m --follow volume-autoscaler-pod-goes-here-from-the-above-command-output
 ```
-Then if you'd like to follow-along, "follow" the logs of your volume autoscaler to watch it detect full disk and scale up.
-
 
 ## Per-Volume Configuration / Annotations
 
@@ -210,3 +211,21 @@ This todo list is mostly for the Author(s), but any contributions are also welco
 * Make per-PVC annotations to (re)direct Slack to different webhooks and/or different channel(s)
 * Discuss what the ideal "default" amount of time before scaling.  Currently is 5 minutes (5, 60 minute intervals)
 * Discuss what the ideal "default" scale up size is, currently 50%.  Suggestion has been made to lower this to around 20%
+
+# Notes for Development
+
+This tool can easily be run locally, as long as you have an functioning kubectl config, and as long as you can reach the http(s) endpoint for your cluster's prometheus.  If your prometheus is internal-only, you may need to have an VPN setup into your VPC/Cluster.  I recommend OpenVPN if you're installing one in your Kubernetes cluster.  I have an [example of installing OpenVPN into Kubernetes here](#todo).
+
+```bash
+# To test out/develop new features, first get your prometheus IP address...
+kubectl get services --all-namespaces | grep -i prometheus-server
+infrastructure  prometheus-server  ClusterIP  10.100.57.102  <none>  80/TCP  109d
+# Then take its IP address and check if you can use it...
+curl http://10.100.57.102
+<a href="/graph">Found</a>
+# Alternatively, if your ops/devops person setup an ingress to make this accessible externally...
+curl https://prometheus.mycompany.com
+# Once you have established a functioning URL to prometheus, put it in the following command
+# and you'll be off and running in a safe way that won't affect anything because of DryRun
+VERBOSE=true SCALE_AFTER_INTERVALS=1 DRY_RUN=true PROMETHEUS_URL=http://10.100.57.102 ./main.py
+```

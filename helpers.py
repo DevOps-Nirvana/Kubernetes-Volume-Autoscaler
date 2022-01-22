@@ -1,15 +1,16 @@
-import os
-import time
-import requests
-import kubernetes
-from packaging import version
+from os import getenv          # Environment variable handling
+import time                    # Sleep
+import requests                # For making HTTP requests to Prometheus
+import kubernetes              # For talking to the Kubernetes API
+from packaging import version  # For checking if prometheus version is new enough to use a new function present_over_time()
+# import signal                  # For sigkill handling
 
 # Used below in init variables
 def detectPrometheusURL():
 
     # Method #1: Use env vars which are set when run in the same namespace as prometheus
-    prometheus_ip_address = os.getenv('PROMETHEUS_SERVER_SERVICE_HOST')
-    prometheus_port = os.getenv('PROMETHEUS_SERVER_SERVICE_PORT_HTTP')
+    prometheus_ip_address = getenv('PROMETHEUS_SERVER_SERVICE_HOST')
+    prometheus_port = getenv('PROMETHEUS_SERVER_SERVICE_PORT_HTTP')
 
     # TODO: If there's other ways to also detect prometheus (eg: try http://prometheus-server) please put them here...
 
@@ -19,21 +20,20 @@ def detectPrometheusURL():
     return "http://{}:{}".format(prometheus_ip_address,prometheus_port)
 
 # Input/configuration variables
-INTERVAL_TIME = int(os.getenv('INTERVAL_TIME') or 60)                               # How often (in seconds) to scan prometheus for checking if we need to resize
-SCALE_ABOVE_PERCENT = int(os.getenv('SCALE_ABOVE_PERCENT') or 80)                   # What percent out of 100 the volume must be consuming before considering to scale it
-SCALE_AFTER_INTERVALS = int(os.getenv('SCALE_AFTER_INTERVALS') or 5)                # How many intervals of INTERVAL_TIME a volume must be above SCALE_ABOVE_PERCENT before we scale
-SCALE_UP_PERCENT = int(os.getenv('SCALE_UP_PERCENT') or 50)                         # How much percent of the current volume size to scale up by.  eg: 100 == (if disk is 10GB, scale to 20GB), eg: 50 == (if disk is 10GB, scale to 15GB)
-SCALE_UP_MIN_INCREMENT = int(os.getenv('SCALE_UP_MIN_INCREMENT') or 1000000000)     # How many bytes is the minimum that we can resize up by, default is 1GB (in bytes, so 1000000000)
-SCALE_UP_MAX_INCREMENT = int(os.getenv('SCALE_UP_MAX_INCREMENT') or 16000000000000) # How many bytes is the maximum that we can resize up by, default is 16TB (in bytes, so 16000000000000)
-SCALE_UP_MAX_SIZE = int(os.getenv('SCALE_UP_MAX_SIZE') or 16000000000000)           # How many bytes is the maximum disk size that we can resize up, default is 16TB for EBS volumes in AWS (in bytes, so 16000000000000)
-SCALE_COOLDOWN_TIME = int(os.getenv('SCALE_COOLDOWN_TIME') or 22200)                # How long (in seconds) we must wait before scaling this volume again.  For AWS EBS, this is 6 hours which is 21600 seconds but for good measure we add an extra 10 minutes to this, so 22200
-PROMETHEUS_URL = os.getenv('PROMETHEUS_URL') or detectPrometheusURL()               # Where prometheus is, if not provided it can auto-detect it if it's in the same namespace as us
-DRY_RUN = True if os.getenv('DRY_RUN', "false").lower() == "true" else False        # If we want to dry-run this
-PROMETHEUS_LABEL_MATCH = os.getenv('PROMETHEUS_LABEL_MATCH') or ''                  # A PromQL label query to restrict volumes for this to see and scale, without braces.  eg: 'namespace="dev"'
-HTTP_TIMEOUT = int(os.getenv('HTTP_TIMEOUT', "15")) or 15                           # Allows to set the timeout for calls to Prometheus and Kubernetes.  This might be needed if your Prometheus or Kubernetes is over a remote WAN link with high latency and/or is heavily loaded
-PROMETHEUS_VERSION = "Unknown"                                                      # Uses to detect the availability of a new function called present_over_time only available on Prometheus v2.30.0 or newer, this is auto-detected and updated, not set by a user
-VERBOSE = True if os.getenv('VERBOSE', "false").lower() == "true" else False        # If we want to verbose mode
-
+INTERVAL_TIME = int(getenv('INTERVAL_TIME') or 60)                               # How often (in seconds) to scan prometheus for checking if we need to resize
+SCALE_ABOVE_PERCENT = int(getenv('SCALE_ABOVE_PERCENT') or 80)                   # What percent out of 100 the volume must be consuming before considering to scale it
+SCALE_AFTER_INTERVALS = int(getenv('SCALE_AFTER_INTERVALS') or 5)                # How many intervals of INTERVAL_TIME a volume must be above SCALE_ABOVE_PERCENT before we scale
+SCALE_UP_PERCENT = int(getenv('SCALE_UP_PERCENT') or 50)                         # How much percent of the current volume size to scale up by.  eg: 100 == (if disk is 10GB, scale to 20GB), eg: 50 == (if disk is 10GB, scale to 15GB)
+SCALE_UP_MIN_INCREMENT = int(getenv('SCALE_UP_MIN_INCREMENT') or 1000000000)     # How many bytes is the minimum that we can resize up by, default is 1GB (in bytes, so 1000000000)
+SCALE_UP_MAX_INCREMENT = int(getenv('SCALE_UP_MAX_INCREMENT') or 16000000000000) # How many bytes is the maximum that we can resize up by, default is 16TB (in bytes, so 16000000000000)
+SCALE_UP_MAX_SIZE = int(getenv('SCALE_UP_MAX_SIZE') or 16000000000000)           # How many bytes is the maximum disk size that we can resize up, default is 16TB for EBS volumes in AWS (in bytes, so 16000000000000)
+SCALE_COOLDOWN_TIME = int(getenv('SCALE_COOLDOWN_TIME') or 22200)                # How long (in seconds) we must wait before scaling this volume again.  For AWS EBS, this is 6 hours which is 21600 seconds but for good measure we add an extra 10 minutes to this, so 22200
+PROMETHEUS_URL = getenv('PROMETHEUS_URL') or detectPrometheusURL()               # Where prometheus is, if not provided it can auto-detect it if it's in the same namespace as us
+DRY_RUN = True if getenv('DRY_RUN', "false").lower() == "true" else False        # If we want to dry-run this
+PROMETHEUS_LABEL_MATCH = getenv('PROMETHEUS_LABEL_MATCH') or ''                  # A PromQL label query to restrict volumes for this to see and scale, without braces.  eg: 'namespace="dev"'
+HTTP_TIMEOUT = int(getenv('HTTP_TIMEOUT', "15")) or 15                           # Allows to set the timeout for calls to Prometheus and Kubernetes.  This might be needed if your Prometheus or Kubernetes is over a remote WAN link with high latency and/or is heavily loaded
+PROMETHEUS_VERSION = "Unknown"                                                   # Used to detect the availability of a new function called present_over_time only available on Prometheus v2.30.0 or newer, this is auto-detected and updated, not set by a user
+VERBOSE = True if getenv('VERBOSE', "false").lower() == "true" else False        # If we want to verbose mode
 
 #############################
 # Initialize Kubernetes

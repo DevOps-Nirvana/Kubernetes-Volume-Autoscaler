@@ -4,8 +4,9 @@
 
 This repository contains a [Kubernetes controller](https://kubernetes.io/docs/concepts/architecture/controller/) that automatically increases the size of a Persistent Volume Claim in Kubernetes when it is nearing full.  Initially engineered based on AWS EKS, this should support any Kubernetes cluster or cloud provider which supports dynamically hot-resizing storage volumes in Kubernetes.
 
-Keeping your volumes at a minimal size can help reduce cost, but having to manually scale them up can be painful and a waste of time for an DevOps / Systems Administrator.  This is often used on storage volumes against things in Kubernetes such as [Prometheus](https://prometheus.io), [MySQL](https://artifacthub.io/packages/helm/bitnami/mysql), [Redis](https://artifacthub.io/packages/helm/bitnami/redis), etc.
+Keeping your volumes at a minimal size can help reduce cost, but having to manually scale them up can be painful and a waste of time for an DevOps / Systems Administrator.  This is often used on storage volumes against things in Kubernetes such as [Prometheus](https://prometheus.io), [MySQL](https://artifacthub.io/packages/helm/bitnami/mysql), [Redis](https://artifacthub.io/packages/helm/bitnami/redis), [RabbitMQ](https://bitnami.com/stack/rabbitmq/helm), or any other stateful service.
 
+<img src="./.github/screenshot.resize.png" alt="Screenshot of usage">
 
 ## Requirements
 
@@ -132,6 +133,19 @@ kubectl get pods | grep -i volume-autoscaler
 kubectl logs --since=10m --follow volume-autoscaler-pod-goes-here-from-the-above-command-output
 ```
 
+## Usage Information and Nuances
+
+#### 1. Volume MUST be in use (pod is running with volume mounted)
+
+For this software to even work, it has to know how much disk is in-use.  Most/any cloud providers do not "know" this information, which is why on the Cloud Providers' portal you can typically not see "how much percent of the disk is in use" unless you run a special service in your node to send this to your provider [like this one for AWS](https://github.com/DevOps-Nirvana/aws-missing-tools/tree/master/aws-push-cloudwatch-instance-metrics).  So, unless you're actively using the disk, Prometheus doesn't know how full a disk is if you aren't running a pod which has mounted this volume, and if Prometheus doesn't know then we don't know either.
+
+#### 2. Must have waited long enough since the last resize
+
+Additionally, since cloud providers don't let you just constantly resize disks, you will have to wait the amount of time required between resizes.  On AWS this is 6 hours, and once this service has done this once, it will show the following warning in the logs.
+
+<img src="./.github/screenshot.recently-scaled.png" alt="Screenshot of usage">
+
+
 ## Per-Volume Configuration / Annotations
 
 This controller also supports tweaking your volume-autoscaler configuration per-PVC with annotations.  The annotations supported are...
@@ -204,6 +218,7 @@ Current Release: 1.0.2
 This todo list is mostly for the Author(s), but any contributions are also welcome.  Please [submit an Issue](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/issues) for issues or requests, or an [Pull Request](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/pulls) if you added some code.
 
 * Add full helm chart values documentation markdown table
+* Add full env vars as documentation markdown table, inside notes for development below
 * Push to helm repo in a Github Action and push the static yaml as well
 * Add tests coverage to ensure the software works as intended moving forward
 * Do some load testing to see how well this software deals with scale, document how much resources needed for each interval.  (10 PVCs, 100+ PVC, 500 PVC)
@@ -214,6 +229,7 @@ This todo list is mostly for the Author(s), but any contributions are also welco
 * Make per-PVC annotations to (re)direct Slack to different webhooks and/or different channel(s)
 * Discuss what the ideal "default" amount of time before scaling.  Currently is 5 minutes (5, 60 minute intervals)
 * Discuss what the ideal "default" scale up size is, currently 50%.  Suggestion has been made to lower this to around 20%
+* Auto-detect (or let user) choose a different provider (eg: AWS/Google) and set different per-provider defaults (eg: wait time, max disk size, etc)
 
 # Notes for Development
 
@@ -231,4 +247,5 @@ curl https://prometheus.mycompany.com
 # Once you have established a functioning URL to prometheus, put it in the following command
 # and you'll be off and running in a safe way that won't affect anything because of DryRun
 VERBOSE=true SCALE_AFTER_INTERVALS=1 DRY_RUN=true PROMETHEUS_URL=http://10.100.57.102 ./main.py
+# Of course, remove DRY_RUN above if you want to actually have the software try to scale your disks by patching the PVC desired storage resources
 ```

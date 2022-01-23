@@ -5,6 +5,7 @@ from helpers import INTERVAL_TIME, PROMETHEUS_URL, DRY_RUN, VERBOSE
 from helpers import convert_bytes_to_storage, scale_up_pvc, testIfPrometheusIsAccessible, describe_all_pvcs
 from helpers import fetch_pvcs_from_prometheus, printHeaderAndConfiguration, calculateBytesToScaleTo, GracefulKiller
 import slack
+import sys, traceback
 
 # Other globals
 IN_MEMORY_STORAGE = {}
@@ -37,9 +38,9 @@ if __name__ == "__main__":
         # In every loop, fetch all our pvcs state from Kubernetes
         try:
             pvcs_in_kubernetes = describe_all_pvcs(simple=True)
-        except Exception as e:
+        except Exception:
             print("Exception while trying to describe all PVCs")
-            print(e)
+            traceback.print_exc()
             time.sleep(MAIN_LOOP_TIME)
             continue
 
@@ -47,9 +48,9 @@ if __name__ == "__main__":
         try:
             pvcs_in_prometheus = fetch_pvcs_from_prometheus(url=PROMETHEUS_URL)
             print("Querying and found {} valid PVCs to asses in prometheus".format(len(pvcs_in_prometheus)))
-        except Exception as e:
+        except Exception:
             print("Exception while trying to fetch PVC metrics from prometheus")
-            print(e)
+            traceback.print_exc()
             time.sleep(MAIN_LOOP_TIME)
             continue
 
@@ -68,7 +69,9 @@ if __name__ == "__main__":
 
                 if VERBOSE:
                     print("Volume {} is {}% in-use of the {} available".format(volume_description,volume_used_percent,pvcs_in_kubernetes[volume_description]['volume_size_status']))
-                    print(pvcs_in_kubernetes[volume_description])
+                    print("  VERBOSE DETAILS:")
+                    for key in pvcs_in_kubernetes[volume_description]:
+                        print("    {}: {}".format(key, pvcs_in_kubernetes[volume_description][key]))
 
                 # Check if we are NOT in an alert condition
                 if volume_used_percent < pvcs_in_kubernetes[volume_description]['scale_above_percent']:
@@ -92,20 +95,20 @@ if __name__ == "__main__":
 
                 # Check if we are NOT in a possible scale condition
                 if IN_MEMORY_STORAGE[volume_description] < pvcs_in_kubernetes[volume_description]['scale_after_intervals']:
-                    print("  AND need to wait {} seconds to scale".format( abs(pvcs_in_kubernetes[volume_description]['last_resized_at'] + pvcs_in_kubernetes[volume_description]['scale_cooldown_time']) - int(time.mktime(time.gmtime())) ))
-                    print("  HAS desired_size {} and current size {}".format( convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_spec_bytes']), convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes'])))
+                    print("  BUT need to wait for {} intervals in alert before considering to scale".format( pvcs_in_kubernetes[volume_description]['scale_after_intervals'] ))
+                    print("  FYI this has desired_size {} and current size {}".format( convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_spec_bytes']), convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes'])))
                     continue
 
                 # If we are in a possible scale condition, check if we recently scaled it and handle accordingly
                 if pvcs_in_kubernetes[volume_description]['last_resized_at'] + pvcs_in_kubernetes[volume_description]['scale_cooldown_time'] >= int(time.mktime(time.gmtime())):
-                    print("  AND we recently scaled it {} seconds ago so we will not resize it".format(pvcs_in_kubernetes[volume_description]['last_resized_at'] + pvcs_in_kubernetes[volume_description]['scale_cooldown_time']))
+                    print("  BUT need to wait {} seconds to scale since the last scale time {} seconds ago".format( abs(pvcs_in_kubernetes[volume_description]['last_resized_at'] + pvcs_in_kubernetes[volume_description]['scale_cooldown_time']) - int(time.mktime(time.gmtime())), abs(pvcs_in_kubernetes[volume_description]['last_resized_at'] - int(time.mktime(time.gmtime()))) ))
                     continue
 
                 # If we reach this far then we will be scaling the disk, all preconditions were passed from above
                 if pvcs_in_kubernetes[volume_description]['last_resized_at'] == 0:
-                    print("  AND we need to scale it, it has never been scaled previously")
+                    print("  AND we need to scale it immediately, it has never been scaled previously")
                 else:
-                    print("  AND we need to scale it, it last scaled {} seconds ago".format( abs((pvcs_in_kubernetes[volume_description]['last_resized_at'] + pvcs_in_kubernetes[volume_description]['scale_cooldown_time']) - int(time.mktime(time.gmtime()))) ))
+                    print("  AND we need to scale it immediately, it last scaled {} seconds ago".format( abs((pvcs_in_kubernetes[volume_description]['last_resized_at'] + pvcs_in_kubernetes[volume_description]['scale_cooldown_time']) - int(time.mktime(time.gmtime()))) ))
 
                 # Calculate how many bytes to resize to based on the parameters provided globally and per-this pv annotations
                 resize_to_bytes = calculateBytesToScaleTo(
@@ -115,7 +118,7 @@ if __name__ == "__main__":
                     max_increment     = pvcs_in_kubernetes[volume_description]['scale_up_max_increment'],
                     maximum_size      = pvcs_in_kubernetes[volume_description]['scale_up_max_size'],
                 )
-                # TODO: Check if storage class has the ALLOWVOLUMEEXPANSION flag set to true, read the SC from pvcs_in_kubernetes[volume_description]['storage_class'] ?
+                # TODO: Check here if storage class has the ALLOWVOLUMEEXPANSION flag set to true, read the SC from pvcs_in_kubernetes[volume_description]['storage_class'] ?
 
                 # If our resize bytes failed for some reason, eg putting invalid data into the annotations on the PV
                 if resize_to_bytes == False:
@@ -165,10 +168,10 @@ if __name__ == "__main__":
                     if SLACK_WEBHOOK_URL and len(SLACK_WEBHOOK_URL) > 0:
                         slack.send(status_output, severity="error")
 
-            except Exception as e:
+            except Exception:
                 print("Exception caught while trying to process record")
                 print(item)
-                print(e)
+                traceback.print_exc()
 
         # Wait until our next interval
         time.sleep(MAIN_LOOP_TIME)

@@ -146,7 +146,7 @@ Additionally, since cloud providers don't let you just constantly resize disks, 
 <img src="./.github/screenshot.recently-scaled.png" alt="Screenshot of usage">
 
 
-## Per-Volume Configuration / Annotations
+## Per-Volume Configuration via Annotations
 
 This controller also supports tweaking your volume-autoscaler configuration per-PVC with annotations.  The annotations supported are...
 
@@ -190,6 +190,8 @@ spec:
 ### [Release: 1.0.3 - Jan 23, 2022](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.3)
 ```
 Handle signal from Kubernetes to kill/restart properly/quickly
+Add full env vars as documentation markdown table, inside notes for development below
+Adding better exception logs via traceback, and more readable/reasonable log output especially when VERBOSE is enabled
 ```
 
 ### [Release: 1.0.2 - Jan 15, 2022](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.2)
@@ -218,7 +220,6 @@ Current Release: 1.0.2
 This todo list is mostly for the Author(s), but any contributions are also welcome.  Please [submit an Issue](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/issues) for issues or requests, or an [Pull Request](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/pulls) if you added some code.
 
 * Add full helm chart values documentation markdown table
-* Add full env vars as documentation markdown table, inside notes for development below
 * Push to helm repo in a Github Action and push the static yaml as well
 * Add tests coverage to ensure the software works as intended moving forward
 * Do some load testing to see how well this software deals with scale, document how much resources needed for each interval.  (10 PVCs, 100+ PVC, 500 PVC)
@@ -229,7 +230,8 @@ This todo list is mostly for the Author(s), but any contributions are also welco
 * Make per-PVC annotations to (re)direct Slack to different webhooks and/or different channel(s)
 * Discuss what the ideal "default" amount of time before scaling.  Currently is 5 minutes (5, 60 minute intervals)
 * Discuss what the ideal "default" scale up size is, currently 50%.  Suggestion has been made to lower this to around 20%
-* Auto-detect (or let user) choose a different provider (eg: AWS/Google) and set different per-provider defaults (eg: wait time, max disk size, etc)
+* Auto-detect (or let user choose) a different provider (eg: AWS/Google) and set different per-provider defaults (eg: wait time, min/max disk size, min disk increment, etc)
+* Check if storage class has the ALLOWVOLUMEEXPANSION to (help?) ensure the expansion will succeed
 
 # Notes for Development
 
@@ -246,6 +248,24 @@ curl http://10.100.57.102
 curl https://prometheus.mycompany.com
 # Once you have established a functioning URL to prometheus, put it in the following command
 # and you'll be off and running in a safe way that won't affect anything because of DryRun
-VERBOSE=true SCALE_AFTER_INTERVALS=1 DRY_RUN=true PROMETHEUS_URL=http://10.100.57.102 ./main.py
+VERBOSE=true DRY_RUN=true PROMETHEUS_URL=http://10.100.57.102 ./main.py
 # Of course, remove DRY_RUN above if you want to actually have the software try to scale your disks by patching the PVC desired storage resources
 ```
+
+The follow environment variables are settable during development to alter the default logic.  These are also settable via the Helm Chart in values, and overridable [per-PVC in Annotations](#per-volume-configuration-via-annotations)
+
+| Variable Name          | Default        | Description |
+|------------------------|----------------|-------------|
+| INTERVAL_TIME          | 60             | How often (in seconds) to scan Prometheus for checking if we need to resize |
+| SCALE_ABOVE_PERCENT    | 80             | What percent out of 100 the volume must be consuming before considering to scale it |
+| SCALE_AFTER_INTERVALS  | 5              | How many intervals of INTERVAL_TIME a volume must be above SCALE_ABOVE_PERCENT before we scale |
+| SCALE_UP_PERCENT       | 50             | How much percent of the current volume size to scale up by.  (100 == (if disk is 10GB, scale to 20GB), eg: 50 == (if disk is 10GB, scale to 15GB) |
+| SCALE_UP_MIN_INCREMENT | 1000000000     | How many bytes is the minimum that we can resize up by, default is 1GB (in bytes, so 1000000000) |
+| SCALE_UP_MAX_INCREMENT | 16000000000000 | How many bytes is the maximum that we can resize up by, default is 16TB (in bytes, so 16000000000000) |
+| SCALE_UP_MAX_SIZE      | 16000000000000 | How many bytes is the maximum disk size that we can resize up, default is 16TB for EBS volumes in AWS (in bytes) |
+| SCALE_COOLDOWN_TIME    | 22200          | How long (in seconds) we must wait before scaling this volume again.  For AWS EBS, this is 6 hours which is 21600 seconds but for good measure we add an extra 10 minutes to this, so 22200 |
+| PROMETHEUS_URL         | `auto-detect`  | Where prometheus is, if not provided it can auto-detect it if it's in the same namespace as this Volume Autoscaler |
+| DRY_RUN                | false          | If we want to dry-run this, aka don't do any actions, only report (for dev/testing/poc purposes) |
+| PROMETHEUS_LABEL_MATCH |                | A PromQL label query to restrict volumes for this to see and scale, without braces.  eg: 'namespace="dev"' |
+| HTTP_TIMEOUT           | 15             | Allows to set the timeout for calls to Prometheus and Kubernetes.  Adjust this if your Prometheus or Kubernetes is over a remote WAN link with high latency and/or is heavily loaded |
+| VERBOSE                | false          | If we want to verbose mode, prints out the raw data from each PVC and its status/state instead of the default "" |

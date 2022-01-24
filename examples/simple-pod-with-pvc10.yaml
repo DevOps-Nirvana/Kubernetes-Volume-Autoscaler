@@ -1,0 +1,416 @@
+# This example below will 10 PVCs, for volume testing
+#
+# Simply run: kubectl apply -f simple-pod-with-pvc10.yaml
+#
+# NOTE: WE intentionally set resources on the pods, because if we don't only so many volumes/pods can run per-node, this helps
+#       trigger cluster-autoscaler which will scale up the cluster automatically and only have so many per-node.
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: test-claim00
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3G
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-claim00
+spec:
+  containers:
+  - name: write
+    image: alpine:latest
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do dd if=/dev/zero of=/mnt/pv/test.img bs=16M; sleep 600;done"]
+    volumeMounts:
+    - mountPath: "/mnt/pv"
+      name: test-volume
+    stdin: true
+    stdinOnce: true
+    tty: true
+    resources:
+      limits:
+        cpu: 1
+        memory: 200Mi
+      requests:
+        cpu: 1
+        memory: 200Mi
+
+  volumes:
+  - name: test-volume
+    persistentVolumeClaim:
+      claimName: test-claim00
+  restartPolicy: Never
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: test-claim01
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3G
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-claim01
+spec:
+  containers:
+  - name: write
+    image: alpine:latest
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do dd if=/dev/zero of=/mnt/pv/test.img bs=16M; sleep 600;done"]
+    volumeMounts:
+    - mountPath: "/mnt/pv"
+      name: test-volume
+    stdin: true
+    stdinOnce: true
+    tty: true
+    resources:
+      limits:
+        cpu: 1
+        memory: 200Mi
+      requests:
+        cpu: 1
+        memory: 200Mi
+
+  volumes:
+  - name: test-volume
+    persistentVolumeClaim:
+      claimName: test-claim01
+  restartPolicy: Never
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: test-claim02
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3G
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-claim02
+spec:
+  containers:
+  - name: write
+    image: alpine:latest
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do dd if=/dev/zero of=/mnt/pv/test.img bs=16M; sleep 600;done"]
+    volumeMounts:
+    - mountPath: "/mnt/pv"
+      name: test-volume
+    stdin: true
+    stdinOnce: true
+    tty: true
+    resources:
+      limits:
+        cpu: 1
+        memory: 200Mi
+      requests:
+        cpu: 1
+        memory: 200Mi
+
+  volumes:
+  - name: test-volume
+    persistentVolumeClaim:
+      claimName: test-claim02
+  restartPolicy: Never
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: test-claim03
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3G
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-claim03
+spec:
+  containers:
+  - name: write
+    image: alpine:latest
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do dd if=/dev/zero of=/mnt/pv/test.img bs=16M; sleep 600;done"]
+    volumeMounts:
+    - mountPath: "/mnt/pv"
+      name: test-volume
+    stdin: true
+    stdinOnce: true
+    tty: true
+    resources:
+      limits:
+        cpu: 1
+        memory: 200Mi
+      requests:
+        cpu: 1
+        memory: 200Mi
+
+  volumes:
+  - name: test-volume
+    persistentVolumeClaim:
+      claimName: test-claim03
+  restartPolicy: Never
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: test-claim04
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3G
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-claim04
+spec:
+  containers:
+  - name: write
+    image: alpine:latest
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do dd if=/dev/zero of=/mnt/pv/test.img bs=16M; sleep 600;done"]
+    volumeMounts:
+    - mountPath: "/mnt/pv"
+      name: test-volume
+    stdin: true
+    stdinOnce: true
+    tty: true
+    resources:
+      limits:
+        cpu: 1
+        memory: 200Mi
+      requests:
+        cpu: 1
+        memory: 200Mi
+
+  volumes:
+  - name: test-volume
+    persistentVolumeClaim:
+      claimName: test-claim04
+  restartPolicy: Never
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: test-claim05
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3G
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-claim05
+spec:
+  containers:
+  - name: write
+    image: alpine:latest
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do dd if=/dev/zero of=/mnt/pv/test.img bs=16M; sleep 600;done"]
+    volumeMounts:
+    - mountPath: "/mnt/pv"
+      name: test-volume
+    stdin: true
+    stdinOnce: true
+    tty: true
+    resources:
+      limits:
+        cpu: 1
+        memory: 200Mi
+      requests:
+        cpu: 1
+        memory: 200Mi
+
+  volumes:
+  - name: test-volume
+    persistentVolumeClaim:
+      claimName: test-claim05
+  restartPolicy: Never
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: test-claim06
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3G
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-claim06
+spec:
+  containers:
+  - name: write
+    image: alpine:latest
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do dd if=/dev/zero of=/mnt/pv/test.img bs=16M; sleep 600;done"]
+    volumeMounts:
+    - mountPath: "/mnt/pv"
+      name: test-volume
+    stdin: true
+    stdinOnce: true
+    tty: true
+    resources:
+      limits:
+        cpu: 1
+        memory: 200Mi
+      requests:
+        cpu: 1
+        memory: 200Mi
+
+  volumes:
+  - name: test-volume
+    persistentVolumeClaim:
+      claimName: test-claim06
+  restartPolicy: Never
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: test-claim07
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3G
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-claim07
+spec:
+  containers:
+  - name: write
+    image: alpine:latest
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do dd if=/dev/zero of=/mnt/pv/test.img bs=16M; sleep 600;done"]
+    volumeMounts:
+    - mountPath: "/mnt/pv"
+      name: test-volume
+    stdin: true
+    stdinOnce: true
+    tty: true
+    resources:
+      limits:
+        cpu: 1
+        memory: 200Mi
+      requests:
+        cpu: 1
+        memory: 200Mi
+
+  volumes:
+  - name: test-volume
+    persistentVolumeClaim:
+      claimName: test-claim07
+  restartPolicy: Never
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: test-claim08
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3G
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-claim08
+spec:
+  containers:
+  - name: write
+    image: alpine:latest
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do dd if=/dev/zero of=/mnt/pv/test.img bs=16M; sleep 600;done"]
+    volumeMounts:
+    - mountPath: "/mnt/pv"
+      name: test-volume
+    stdin: true
+    stdinOnce: true
+    tty: true
+    resources:
+      limits:
+        cpu: 1
+        memory: 200Mi
+      requests:
+        cpu: 1
+        memory: 200Mi
+
+  volumes:
+  - name: test-volume
+    persistentVolumeClaim:
+      claimName: test-claim08
+  restartPolicy: Never
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: test-claim09
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3G
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-claim09
+spec:
+  containers:
+  - name: write
+    image: alpine:latest
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do dd if=/dev/zero of=/mnt/pv/test.img bs=16M; sleep 600;done"]
+    volumeMounts:
+    - mountPath: "/mnt/pv"
+      name: test-volume
+    stdin: true
+    stdinOnce: true
+    tty: true
+    resources:
+      limits:
+        cpu: 1
+        memory: 200Mi
+      requests:
+        cpu: 1
+        memory: 200Mi
+
+  volumes:
+  - name: test-volume
+    persistentVolumeClaim:
+      claimName: test-claim09
+  restartPolicy: Never

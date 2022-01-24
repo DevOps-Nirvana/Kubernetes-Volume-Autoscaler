@@ -122,18 +122,18 @@ dnsConfig:
   ndots: 2
 
 # container resource requests/limits
-# some suggested values are below, but will likely only get you into about 100 pvcs.  Your usage may vary
-#   so dial this if and as you wish based on your setup
+# The suggested values below have been tested against 100+ pvcs.  Your usage may vary, so
+#    adjust this upwards if you need.
 # Note: Limits are HARD Limits
 #       Requests are "soft" limits and are what affects HPA (autoscaling) aggressiveness and are what resources are is guaranteed
 # To use below, remove the {} and uncomment the following 6 lines and customize them as desired
 resources: {}
   # limits:
-  #   cpu: 100m
-  #   memory: 64Mi
+  #   cpu: 20m
+  #   memory: 75Mi
   # requests:
-  #   cpu: 100m
-  #   memory: 64Mi
+  #   cpu: 20m
+  #   memory: 75Mi
 
 # Assign pods to nodes based on nodeSelector labels, define a default here if desired
 # To use below, remove the {} and uncomment the following 1 lines and/or add your own lines

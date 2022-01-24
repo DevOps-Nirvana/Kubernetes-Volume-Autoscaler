@@ -27,8 +27,8 @@ As mentioned above, you must have a storageclass which supports volume expansion
 ```bash
 # First, check if your storage class supports volume expansion...
 $ kubectl get storageclasses
-NAME                   PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
-standard               kubernetes.io/aws-ebs   Delete          Immediate              false                  10d
+NAME      PROVISIONER  RECLAIMPOLICY  VOLUMEBINDINGMODE  ALLOWVOLUMEEXPANSION  AGE
+standard  aws-ebs      Delete         Immediate          false                 10d
 
 # If ALLOWVOLUMEEXPANSION is not set to true, patch it to enable this
 kubectl patch storageclass standard -p '{"allowVolumeExpansion": true}'
@@ -187,7 +187,7 @@ spec:
 ```
 
 # Release History
-### [Release: 1.0.3 - Jan 23, 2022](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.3)
+### [Release: 1.0.3 - Jan 24, 2022](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.3)
 ```
 Handle signal from Kubernetes to kill/restart properly/quickly
 Add full env vars as documentation markdown table, inside notes for development section below
@@ -227,13 +227,13 @@ This todo list is mostly for the Author(s), but any contributions are also welco
 * Push to helm repo in a Github Action and push the static yaml as well, make things "easier" and automated
 * Add badges to the README regarding Github Actions success/failures
 * Add tests coverage to ensure the software works as intended moving forward
-* Do some load testing to see how well this software deals with scale, document how much resources needed for each interval.  (10 PVCs, 100+ PVC, 500 PVC)
 * Make per-PVC annotations to (re)direct Slack to different webhooks and/or different channel(s)?
 * Discuss what the ideal "default" amount of time before scaling.  Currently is 5 minutes (5, 60 minute intervals)
 * Discuss what the ideal "default" scale up size is, currently 50%.  Suggestion has been made to lower this to around 20%
 * Add better examples for "best practices" when using Helm (aka, subchart)
 * Test it and add working examples of using this on other cloud providers (Azure / Google Cloud)
 * Auto-detect (or let user choose) a different provider (eg: AWS/Google) and set different per-provider defaults (eg: wait time, min/max disk size, min disk increment, etc)
+* Prevent flooding to slack if many items (per-loop) need to be scaled.  Group them into one big message!
 
 # Notes for Development
 

@@ -2,7 +2,7 @@
 import os
 import time
 from helpers import INTERVAL_TIME, PROMETHEUS_URL, DRY_RUN, VERBOSE
-from helpers import convert_bytes_to_storage, scale_up_pvc, testIfPrometheusIsAccessible, describe_all_pvcs
+from helpers import convert_bytes_to_storage, scale_up_pvc, testIfPrometheusIsAccessible, describe_all_pvcs, send_kubernetes_event
 from helpers import fetch_pvcs_from_prometheus, printHeaderAndConfiguration, calculateBytesToScaleTo, GracefulKiller
 import slack
 import sys, traceback
@@ -143,28 +143,38 @@ if __name__ == "__main__":
 
                 # If we aren't dry-run, lets resize
                 print("  RESIZING disk from {} to {}".format(convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']), convert_bytes_to_storage(resize_to_bytes)))
+                status_output = "to scale up `{}` by `{}%` from `{}` to `{}`, it was using more than `{}%` disk space over the last `{} seconds`".format(
+                    volume_description,
+                    pvcs_in_kubernetes[volume_description]['scale_up_percent'],
+                    convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']),
+                    convert_bytes_to_storage(resize_to_bytes),
+                    pvcs_in_kubernetes[volume_description]['scale_above_percent'],
+                    IN_MEMORY_STORAGE[volume_description] * INTERVAL_TIME
+                )
+                # Send event that we're starting to request a resize
+                send_kubernetes_event(
+                    name=volume_name, namespace=volume_namespace, reason="VolumeResizeRequested",
+                    message="Requesting {}".format(status_output)
+                )
+
                 if scale_up_pvc(volume_namespace, volume_name, resize_to_bytes):
-                    status_output = "Successfully scaled up `{}` by `{}%` from `{}` to `{}`, it was using more than `{}%` disk space over the last `{} seconds`".format(
-                        volume_description,
-                        pvcs_in_kubernetes[volume_description]['scale_up_percent'],
-                        convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']),
-                        convert_bytes_to_storage(resize_to_bytes),
-                        pvcs_in_kubernetes[volume_description]['scale_above_percent'],
-                        IN_MEMORY_STORAGE[volume_description] * INTERVAL_TIME
-                    )
+                    status_output = "Successfully requested {}".format(status_output)
+                    # Print success to console
                     print(status_output)
+                    # Intentionally skipping sending an event to Kubernetes on success, the above event is enough for now until we detect if resize succeeded
+                    # Print success to Slack
                     if slack.SLACK_WEBHOOK_URL and len(slack.SLACK_WEBHOOK_URL) > 0:
                         slack.send(status_output)
                 else:
-                    status_output = "FAILED Scaling up `{}` by `{}%` from `{}` to `{}`, it was using more than `{}%` disk space over the last `{} seconds`".format(
-                        volume_description,
-                        pvcs_in_kubernetes[volume_description]['scale_up_percent'],
-                        convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']),
-                        convert_bytes_to_storage(resize_to_bytes),
-                        pvcs_in_kubernetes[volume_description]['scale_above_percent'],
-                        IN_MEMORY_STORAGE[volume_description] * INTERVAL_TIME,
-                    )
+                    status_output = "FAILED requesting {}".format(status_output)
+                    # Print failure to console
                     print(status_output)
+                    # Print failure to Kubernetes Events
+                    send_kubernetes_event(
+                        name=volume_name, namespace=volume_namespace, reason="VolumeResizeRequestFailed",
+                        message=status_output, type="Warning"
+                    )
+                    # Print failure to Slack
                     if SLACK_WEBHOOK_URL and len(SLACK_WEBHOOK_URL) > 0:
                         slack.send(status_output, severity="error")
 

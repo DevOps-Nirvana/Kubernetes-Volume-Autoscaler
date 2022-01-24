@@ -190,8 +190,9 @@ spec:
 ### [Release: 1.0.3 - Jan 23, 2022](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.3)
 ```
 Handle signal from Kubernetes to kill/restart properly/quickly
-Add full env vars as documentation markdown table, inside notes for development below
+Add full env vars as documentation markdown table, inside notes for development section below
 Adding better exception logs via traceback, and more readable/reasonable log output especially when VERBOSE is enabled
+Generate Kubernetes events so everyone viewing the event stream knows when actions occur.  AKA, Be an responsible controller
 ```
 
 ### [Release: 1.0.2 - Jan 15, 2022](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.2)
@@ -217,21 +218,22 @@ Some basic documentation and installation help/guides
 
 Current Release: 1.0.2
 
-This todo list is mostly for the Author(s), but any contributions are also welcome.  Please [submit an Issue](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/issues) for issues or requests, or an [Pull Request](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/pulls) if you added some code.
+This todo list is mostly for the Author(s), but any contributions are also welcome.  Please [submit an Issue](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/issues) for issues/requests, or an [Pull Request](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/pulls) if you added some code.  These items are generally put in order of most-important first.
 
-* Add full helm chart values documentation markdown table
-* Push to helm repo in a Github Action and push the static yaml as well
+* Listen/watch to events of the PV/PVC, or listen/read from Prometheus to monitor and ensure the resizing happens, log and/or slack it accordingly
+* Catch WHY resizing failed (try?) and make sure to log/send to slack/k8s events the why
+* Check if storage class has the ALLOWVOLUMEEXPANSION to (help?) ensure the expansion will succeed, do something about it and/or report it
+* Add full helm chart values documentation markdown table (tie into adding docs for Universal Helm Charts)
+* Push to helm repo in a Github Action and push the static yaml as well, make things "easier" and automated
+* Add badges to the README regarding Github Actions success/failures
 * Add tests coverage to ensure the software works as intended moving forward
 * Do some load testing to see how well this software deals with scale, document how much resources needed for each interval.  (10 PVCs, 100+ PVC, 500 PVC)
-* Generate kubernetes EVENTS when we resize volumes so everyone knows we are doing things, to be a good controller
-* Add badges to the README regarding Github Actions success/failures
-* Listen/watch to events of the PV/PVC, or listen/read from Prometheus to monitor and ensure the resizing happens, log and/or slack it accordingly
-* Test it and add working examples of using this on other cloud providers (Azure / Google Cloud)
-* Make per-PVC annotations to (re)direct Slack to different webhooks and/or different channel(s)
+* Make per-PVC annotations to (re)direct Slack to different webhooks and/or different channel(s)?
 * Discuss what the ideal "default" amount of time before scaling.  Currently is 5 minutes (5, 60 minute intervals)
 * Discuss what the ideal "default" scale up size is, currently 50%.  Suggestion has been made to lower this to around 20%
+* Add better examples for "best practices" when using Helm (aka, subchart)
+* Test it and add working examples of using this on other cloud providers (Azure / Google Cloud)
 * Auto-detect (or let user choose) a different provider (eg: AWS/Google) and set different per-provider defaults (eg: wait time, min/max disk size, min disk increment, etc)
-* Check if storage class has the ALLOWVOLUMEEXPANSION to (help?) ensure the expansion will succeed
 
 # Notes for Development
 

@@ -235,6 +235,7 @@ This todo list is mostly for the Author(s), but any contributions are also welco
 * Auto-detect (or let user choose) a different provider (eg: AWS/Google) and set different per-provider defaults (eg: wait time, min/max disk size, min disk increment, etc)
 * Prevent flooding to slack if many items (per-loop) need to be scaled.  Group them into one big message!
 * Make it possible to autoscale up node's root volumes?  This will require significant engineering, as this would require talking to the provider APIs, and require an IAM/OIDC/AccessKey/etc to be able to scale the root volume up.  Likely very challenging, but would be ideal to handle.  Consider writing a new service dedicated for this instead.
+* Generate prometheus metrics to be able to alert upon volume autoscaling working or not?  This I would do after some of the above tasks validating the scale-up happened.
 
 # Notes for Development
 

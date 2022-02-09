@@ -237,6 +237,10 @@ This todo list is mostly for the Author(s), but any contributions are also welco
 * Make it possible to autoscale up node's root volumes?  This will require significant engineering, as this would require talking to the provider APIs, and require an IAM/OIDC/AccessKey/etc to be able to scale the root volume up.  Likely very challenging, but would be ideal to handle.  Consider writing a new service dedicated for this instead.
 * Generate prometheus metrics to be able to alert upon volume autoscaling working or not?  This I would do after some of the above tasks validating the scale-up happened.
 
+# Alternative services
+
+Here is another similar service to this.  Its written in Golang, but it lacks some of the configurability that this tool has currently.  Check it out https://github.com/topolvm/pvc-autoresizer/
+
 # Notes for Development
 
 This tool can easily be run locally, as long as you have an functioning kubectl config, and as long as you can reach the http(s) endpoint for your cluster's prometheus.  If your prometheus is internal-only, you may need to have an VPN setup into your VPC/Cluster.  I recommend OpenVPN if you're installing one in your Kubernetes cluster.  I have an [example of installing OpenVPN into Kubernetes here](#todo).

@@ -1,11 +1,31 @@
 #!/usr/bin/env python3
 import os
 import time
-from helpers import INTERVAL_TIME, PROMETHEUS_URL, DRY_RUN, VERBOSE
+from helpers import INTERVAL_TIME, PROMETHEUS_URL, DRY_RUN, VERBOSE, get_settings_for_prometheus_metrics
 from helpers import convert_bytes_to_storage, scale_up_pvc, testIfPrometheusIsAccessible, describe_all_pvcs, send_kubernetes_event
 from helpers import fetch_pvcs_from_prometheus, printHeaderAndConfiguration, calculateBytesToScaleTo, GracefulKiller
+from prometheus_client import start_http_server, Summary, Gauge, Counter, Info
 import slack
 import sys, traceback
+
+# Initialize our Prometheus metrics (counters)
+PROMETHEUS_METRICS = {}
+PROMETHEUS_METRICS['resize_evaluated']  = Counter('volume_autoscaler_resize_evaluated',  'Counter which is increased every time we evaluate resizing PVCs')
+PROMETHEUS_METRICS['resize_attempted']  = Counter('volume_autoscaler_resize_attempted',  'Counter which is increased every time we attempt to resize')
+PROMETHEUS_METRICS['resize_successful'] = Counter('volume_autoscaler_resize_successful', 'Counter which is increased every time we successfully resize')
+PROMETHEUS_METRICS['resize_failure']    = Counter('volume_autoscaler_resize_failure',    'Counter which is increased every time we fail to resize')
+# Initialize our Prometheus metrics (gauges)
+PROMETHEUS_METRICS['num_valid_pvcs'] = Gauge('volume_autoscaler_num_valid_pvcs', 'Gauge with the number of valid PVCs detected which we found to consider for scaling')
+PROMETHEUS_METRICS['num_valid_pvcs'].set(0)
+PROMETHEUS_METRICS['num_pvcs_above_threshold'] = Gauge('volume_autoscaler_num_pvcs_above_threshold', 'Gauge with the number of PVCs detected above the desired percentage threshold')
+PROMETHEUS_METRICS['num_pvcs_above_threshold'].set(0)
+PROMETHEUS_METRICS['num_pvcs_below_threshold'] = Gauge('volume_autoscaler_num_pvcs_below_threshold', 'Gauge with the number of PVCs detected below the desired percentage threshold')
+PROMETHEUS_METRICS['num_pvcs_below_threshold'].set(0)
+# Initialize our Prometheus metrics (info/settings)
+PROMETHEUS_METRICS['info'] = Info('volume_autoscaler_release', 'Release/version information about this volume autoscaler service')
+PROMETHEUS_METRICS['info'].info({'version': '1.0.4'})
+PROMETHEUS_METRICS['settings'] = Info('volume_autoscaler_settings', 'Settings currently used in this service')
+PROMETHEUS_METRICS['settings'].info(get_settings_for_prometheus_metrics())
 
 # Other globals
 IN_MEMORY_STORAGE = {}
@@ -16,6 +36,9 @@ if __name__ == "__main__":
 
     # Test if our prometheus URL works before continuing
     testIfPrometheusIsAccessible(PROMETHEUS_URL)
+
+    # Startup our prometheus metrics endpoint
+    start_http_server(8000)
 
     # TODO: Test k8s access, or just test on-the-fly below?
 
@@ -37,6 +60,7 @@ if __name__ == "__main__":
 
         # In every loop, fetch all our pvcs state from Kubernetes
         try:
+            PROMETHEUS_METRICS['resize_evaluated'].inc()
             pvcs_in_kubernetes = describe_all_pvcs(simple=True)
         except Exception:
             print("Exception while trying to describe all PVCs")
@@ -48,6 +72,7 @@ if __name__ == "__main__":
         try:
             pvcs_in_prometheus = fetch_pvcs_from_prometheus(url=PROMETHEUS_URL)
             print("Querying and found {} valid PVCs to assess in prometheus".format(len(pvcs_in_prometheus)))
+            PROMETHEUS_METRICS['num_valid_pvcs'].set(len(pvcs_in_prometheus))
         except Exception:
             print("Exception while trying to fetch PVC metrics from prometheus")
             traceback.print_exc()
@@ -55,6 +80,8 @@ if __name__ == "__main__":
             continue
 
         # Iterate through every item and handle it accordingly
+        PROMETHEUS_METRICS['num_pvcs_above_threshold'].set(0)  # Reset these each loop
+        PROMETHEUS_METRICS['num_pvcs_below_threshold'].set(0)  # Reset these each loop
         for item in pvcs_in_prometheus:
             try:
                 volume_name = str(item['metric']['persistentvolumeclaim'])
@@ -75,11 +102,14 @@ if __name__ == "__main__":
 
                 # Check if we are NOT in an alert condition
                 if volume_used_percent < pvcs_in_kubernetes[volume_description]['scale_above_percent']:
+                    PROMETHEUS_METRICS['num_pvcs_below_threshold'].inc()
                     if volume_description in IN_MEMORY_STORAGE:
                         del IN_MEMORY_STORAGE[volume_description]
                     if VERBOSE:
                         print(" and is not above {}%".format(pvcs_in_kubernetes[volume_description]['scale_above_percent']))
                     continue
+                else:
+                    PROMETHEUS_METRICS['num_pvcs_above_threshold'].inc()
 
                 # If we are in alert condition, record this in our simple in-memory counter
                 if volume_description in IN_MEMORY_STORAGE:
@@ -142,6 +172,7 @@ if __name__ == "__main__":
                     continue
 
                 # If we aren't dry-run, lets resize
+                PROMETHEUS_METRICS['resize_attempted'].inc()
                 print("  RESIZING disk from {} to {}".format(convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']), convert_bytes_to_storage(resize_to_bytes)))
                 status_output = "to scale up `{}` by `{}%` from `{}` to `{}`, it was using more than `{}%` disk space over the last `{} seconds`".format(
                     volume_description,
@@ -158,6 +189,7 @@ if __name__ == "__main__":
                 )
 
                 if scale_up_pvc(volume_namespace, volume_name, resize_to_bytes):
+                    PROMETHEUS_METRICS['resize_successful'].inc()
                     status_output = "Successfully requested {}".format(status_output)
                     # Print success to console
                     print(status_output)
@@ -166,6 +198,7 @@ if __name__ == "__main__":
                     if slack.SLACK_WEBHOOK_URL and len(slack.SLACK_WEBHOOK_URL) > 0:
                         slack.send(status_output)
                 else:
+                    PROMETHEUS_METRICS['resize_failure'].inc()
                     status_output = "FAILED requesting {}".format(status_output)
                     # Print failure to console
                     print(status_output)

@@ -159,6 +159,13 @@ extraContainers: []
 volumes: []
 volumeMounts: []
 
+# We use a service so we can have prometheus metrics
+service:
+  enabled: true
+  targetPort: 8000
+  annotations:
+    prometheus.io/scrape: 'true'
+
 # For AWS Security Groups, if you wish to use this specify the sg-123123123 in an list here
 securityGroupIDs: []
 
@@ -200,8 +207,6 @@ usingNewRecommendedLabels: true
 labelsEnableDefault: true
 
 # We don't use a lot of features from the upstream chart, so disable them
-service:
-  enabled: false
 livenessProbe:
   enabled: false
 readinessProbe:

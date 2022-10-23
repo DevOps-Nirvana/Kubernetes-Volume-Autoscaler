@@ -14,8 +14,10 @@ rm -Rf $TMPFOLDER || true
 # Clone the latest of our upstream/example/foundation repo with a "deployment" object
 git clone https://github.com/DevOps-Nirvana/Universal-Kubernetes-Helm-Charts.git $TMPFOLDER
 
-# Copy it to our repo
-cp -L -a $TMPFOLDER/charts/deployment/templates/* ./templates/
+# Copy it to our repo, following symlinks with silly hacks
+tar -C $TMPFOLDER/charts/deployment/templates -hcf - ./ > $TMPFOLDER/stripped.tar
+tar -C ./templates -xf $TMPFOLDER/stripped.tar
+# cp -L -a $TMPFOLDER/charts/deployment/templates/* ./templates/
 cp -a $TMPFOLDER/charts/deployment/values.yaml ./values.yaml.upstream
 
 # Remove cloned folder

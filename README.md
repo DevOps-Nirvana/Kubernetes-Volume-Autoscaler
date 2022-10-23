@@ -254,9 +254,13 @@ curl http://10.100.57.102
 <a href="/graph">Found</a>
 # Alternatively, if your ops/devops person setup an ingress to make this accessible externally...
 curl https://prometheus.mycompany.com
+# Alternatively, if you wish to port forward to your cluster...
+kubectl port-forward svc/prometheus-server 8001:80 &
+# and check if it works...
+curl http://localhost:8001
 # Once you have established a functioning URL to prometheus, put it in the following command
 # and you'll be off and running in a safe way that won't affect anything because of DryRun
-VERBOSE=true DRY_RUN=true PROMETHEUS_URL=http://10.100.57.102 ./main.py
+VERBOSE=true DRY_RUN=true PROMETHEUS_URL=http://PUT_PROMETHEUS_URL_FROM_ABOVE_HERE ./main.py
 # Of course, remove DRY_RUN above if you want to actually have the software try to scale your disks by patching the PVC desired storage resources
 ```
 

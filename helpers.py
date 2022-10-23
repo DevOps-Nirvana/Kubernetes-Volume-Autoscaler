@@ -39,6 +39,25 @@ HTTP_TIMEOUT = int(getenv('HTTP_TIMEOUT', "15")) or 15                          
 PROMETHEUS_VERSION = "Unknown"                                                   # Used to detect the availability of a new function called present_over_time only available on Prometheus v2.30.0 or newer, this is auto-detected and updated, not set by a user
 VERBOSE = True if getenv('VERBOSE', "false").lower() == "true" else False        # If we want to verbose mode
 
+# Simple helper to pass back
+def get_settings_for_prometheus_metrics():
+    return {
+        'interval_time_seconds': str(INTERVAL_TIME),
+        'scale_above_percent': str(SCALE_ABOVE_PERCENT),
+        'scale_after_intervals': str(SCALE_AFTER_INTERVALS),
+        'scale_up_percent': str(SCALE_UP_PERCENT),
+        'scale_up_minimum_increment_bytes': str(SCALE_UP_MIN_INCREMENT),
+        'scale_up_maximum_increment_bytes': str(SCALE_UP_MAX_INCREMENT),
+        'scale_up_maximum_size_bytes': str(SCALE_UP_MAX_SIZE),
+        'scale_cooldown_time_seconds': str(SCALE_COOLDOWN_TIME),
+        'prometheus_url': PROMETHEUS_URL,
+        'dry_run': "true" if DRY_RUN else "false",
+        'prometheus_label_match': PROMETHEUS_LABEL_MATCH,
+        'prometheus_version_detected': PROMETHEUS_VERSION,
+        'http_timeout_seconds': str(HTTP_TIMEOUT),
+        'verbose_enabled': "true" if VERBOSE else "false",
+    }
+
 # This handler helps handle sigint/term gracefully (not in the middle of an runloop)
 class GracefulKiller:
   kill_now = False

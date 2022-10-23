@@ -162,7 +162,11 @@ volumeMounts: []
 # We use a service so we can have prometheus metrics
 service:
   enabled: true
+  type: ClusterIP
+  port: 80
   targetPort: 8000
+  name: default-service
+  additionalPorts: []
   annotations:
     prometheus.io/scrape: 'true'
 

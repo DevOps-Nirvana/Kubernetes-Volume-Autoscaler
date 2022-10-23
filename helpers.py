@@ -27,7 +27,7 @@ def detectPrometheusURL():
 INTERVAL_TIME = int(getenv('INTERVAL_TIME') or 60)                               # How often (in seconds) to scan prometheus for checking if we need to resize
 SCALE_ABOVE_PERCENT = int(getenv('SCALE_ABOVE_PERCENT') or 80)                   # What percent out of 100 the volume must be consuming before considering to scale it
 SCALE_AFTER_INTERVALS = int(getenv('SCALE_AFTER_INTERVALS') or 5)                # How many intervals of INTERVAL_TIME a volume must be above SCALE_ABOVE_PERCENT before we scale
-SCALE_UP_PERCENT = int(getenv('SCALE_UP_PERCENT') or 50)                         # How much percent of the current volume size to scale up by.  eg: 100 == (if disk is 10GB, scale to 20GB), eg: 50 == (if disk is 10GB, scale to 15GB)
+SCALE_UP_PERCENT = int(getenv('SCALE_UP_PERCENT') or 20)                         # How much percent of the current volume size to scale up by.  eg: 100 == (if disk is 10GB, scale to 20GB), eg: 20 == (if disk is 10GB, scale to 12GB)
 SCALE_UP_MIN_INCREMENT = int(getenv('SCALE_UP_MIN_INCREMENT') or 1000000000)     # How many bytes is the minimum that we can resize up by, default is 1GB (in bytes, so 1000000000)
 SCALE_UP_MAX_INCREMENT = int(getenv('SCALE_UP_MAX_INCREMENT') or 16000000000000) # How many bytes is the maximum that we can resize up by, default is 16TB (in bytes, so 16000000000000)
 SCALE_UP_MAX_SIZE = int(getenv('SCALE_UP_MAX_SIZE') or 16000000000000)           # How many bytes is the maximum disk size that we can resize up, default is 16TB for EBS volumes in AWS (in bytes, so 16000000000000)

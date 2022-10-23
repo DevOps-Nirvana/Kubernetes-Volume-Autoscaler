@@ -163,7 +163,7 @@ metadata:
     # This is how much to scale a disk up by, in percentage of the current size.
     #   Eg: If this is set to "10" and the disk is 100GB, it will scale to 110GB
     #   At larger disk sizes you may want to set this on your PVCs to like "5" or "10"
-    volume.autoscaler.kubernetes.io/scale-up-percent: "50"      # 50 (percent) is the default value
+    volume.autoscaler.kubernetes.io/scale-up-percent: "20"      # 20 (percent) is the default value
     # This is the smallest increment to scale up by.  This helps when the disks are very small, and helps hit the minimum increment value per-provider (this is 1GB on AWS)
     volume.autoscaler.kubernetes.io/scale-up-min-increment: "1000000000"  # 1GB by default (in bytes)
     # This is the maximum increment to scale up by.  This helps when the disks are very LARGE, to prevent them from growing too much at a time.
@@ -229,7 +229,6 @@ This todo list is mostly for the Author(s), but any contributions are also welco
 * Add tests coverage to ensure the software works as intended moving forward
 * Make per-PVC annotations to (re)direct Slack to different webhooks and/or different channel(s)?
 * Discuss what the ideal "default" amount of time before scaling.  Currently is 5 minutes (5, 60 minute intervals)
-* Discuss what the ideal "default" scale up size is, currently 50%.  Suggestion has been made to lower this to around 20%
 * Add better examples for "best practices" when using Helm (aka, subchart)
 * Test it and add working examples of using this on other cloud providers (Azure / Google Cloud)
 * Auto-detect (or let user choose) a different provider (eg: AWS/Google) and set different per-provider defaults (eg: wait time, min/max disk size, min disk increment, etc)
@@ -268,7 +267,7 @@ The follow environment variables are settable during development to alter the de
 | INTERVAL_TIME          | 60             | How often (in seconds) to scan Prometheus for checking if we need to resize |
 | SCALE_ABOVE_PERCENT    | 80             | What percent out of 100 the volume must be consuming before considering to scale it |
 | SCALE_AFTER_INTERVALS  | 5              | How many intervals of INTERVAL_TIME a volume must be above SCALE_ABOVE_PERCENT before we scale |
-| SCALE_UP_PERCENT       | 50             | How much percent of the current volume size to scale up by.  (100 == (if disk is 10GB, scale to 20GB), eg: 50 == (if disk is 10GB, scale to 15GB) |
+| SCALE_UP_PERCENT       | 20             | How much percent of the current volume size to scale up by.  (100 == (if disk is 10GB, scale to 20GB), eg: 20 == (if disk is 10GB, scale to 12GB) |
 | SCALE_UP_MIN_INCREMENT | 1000000000     | How many bytes is the minimum that we can resize up by, default is 1GB (in bytes, so 1000000000) |
 | SCALE_UP_MAX_INCREMENT | 16000000000000 | How many bytes is the maximum that we can resize up by, default is 16TB (in bytes, so 16000000000000) |
 | SCALE_UP_MAX_SIZE      | 16000000000000 | How many bytes is the maximum disk size that we can resize up, default is 16TB for EBS volumes in AWS (in bytes) |

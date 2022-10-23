@@ -17,7 +17,7 @@ scale_after_intervals: "5"
 # How much full the disk must be before considering scaling
 scale_above_percent: "80"
 # How much to scale disks up by, as a percentage of their current size
-scale_up_percent: "50"
+scale_up_percent: "20"
 # An minimum amount of bytes to scale up by (typically because providers like AWS only support 1GB increments in disk size)
 scale_up_min_increment: "1000000000"
 # An maximum amount of bytes to scale up by (helps prevent large disks from growing too fast/exponentially).  Set to 16TB by default, which basically means this is disabled

@@ -134,6 +134,8 @@ resources: {}
   # requests:
   #   cpu: 20m
   #   memory: 75Mi
+  # NOTE: Above resources have been used successfully on numerous clients and customers, but, just incase and what the default for most
+  #       helm charts is to keep this disabled, and let the user specify it.  So, feel free if you'd like
 
 # Assign pods to nodes based on nodeSelector labels, define a default here if desired
 # To use below, remove the {} and uncomment the following 1 lines and/or add your own lines

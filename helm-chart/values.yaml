@@ -170,6 +170,28 @@ service:
   annotations:
     prometheus.io/scrape: 'true'
 
+# Probes to detect failure
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 120
+  periodSeconds: 10
+  timeoutSeconds: 9
+  successThreshold: 1
+  failureThreshold: 3
+  probeType: httpGet
+  path: /alive
+  port: default-service
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 4
+  successThreshold: 2
+  failureThreshold: 2
+  probeType: httpGet
+  path: /ready
+  port: default-service
+
 # For AWS Security Groups, if you wish to use this specify the sg-123123123 in an list here
 securityGroupIDs: []
 
@@ -211,10 +233,6 @@ usingNewRecommendedLabels: true
 labelsEnableDefault: true
 
 # We don't use a lot of features from the upstream chart, so disable them
-livenessProbe:
-  enabled: false
-readinessProbe:
-  enabled: false
 podDistuptionBudget:
   enabled: false
 ingress:

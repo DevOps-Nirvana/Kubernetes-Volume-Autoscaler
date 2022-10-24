@@ -191,47 +191,17 @@ spec:
 
 This controller also supports publishing prometheus metrics automatically.  It hosts a simple http server on port 8000 and publishes the following metrics
 
-```
-# HELP volume_autoscaler_resize_evaluated_total Counter which is increased every time we evaluate resizing PVCs
-# TYPE volume_autoscaler_resize_evaluated_total counter
-volume_autoscaler_resize_evaluated_total 1.0
-# HELP volume_autoscaler_resize_evaluated_created Counter which is increased every time we evaluate resizing PVCs
-# TYPE volume_autoscaler_resize_evaluated_created gauge
-volume_autoscaler_resize_evaluated_created 1.666564445372884e+09
-# HELP volume_autoscaler_resize_attempted_total Counter which is increased every time we attempt to resize
-# TYPE volume_autoscaler_resize_attempted_total counter
-volume_autoscaler_resize_attempted_total 0.0
-# HELP volume_autoscaler_resize_attempted_created Counter which is increased every time we attempt to resize
-# TYPE volume_autoscaler_resize_attempted_created gauge
-volume_autoscaler_resize_attempted_created 1.666564445372895e+09
-# HELP volume_autoscaler_resize_successful_total Counter which is increased every time we successfully resize
-# TYPE volume_autoscaler_resize_successful_total counter
-volume_autoscaler_resize_successful_total 0.0
-# HELP volume_autoscaler_resize_successful_created Counter which is increased every time we successfully resize
-# TYPE volume_autoscaler_resize_successful_created gauge
-volume_autoscaler_resize_successful_created 1.6665644453729012e+09
-# HELP volume_autoscaler_resize_failure_total Counter which is increased every time we fail to resize
-# TYPE volume_autoscaler_resize_failure_total counter
-volume_autoscaler_resize_failure_total 0.0
-# HELP volume_autoscaler_resize_failure_created Counter which is increased every time we fail to resize
-# TYPE volume_autoscaler_resize_failure_created gauge
-volume_autoscaler_resize_failure_created 1.666564445372905e+09
-# HELP volume_autoscaler_num_valid_pvcs Gauge with the number of valid PVCs detected which we found to consider for scaling
-# TYPE volume_autoscaler_num_valid_pvcs gauge
-volume_autoscaler_num_valid_pvcs 3.0
-# HELP volume_autoscaler_num_pvcs_above_threshold Gauge with the number of PVCs detected above the desired percentage threshold
-# TYPE volume_autoscaler_num_pvcs_above_threshold gauge
-volume_autoscaler_num_pvcs_above_threshold 0.0
-# HELP volume_autoscaler_num_pvcs_below_threshold Gauge with the number of PVCs detected below the desired percentage threshold
-# TYPE volume_autoscaler_num_pvcs_below_threshold gauge
-volume_autoscaler_num_pvcs_below_threshold 3.0
-# HELP volume_autoscaler_release_info Release/version information about this volume autoscaler service
-# TYPE volume_autoscaler_release_info gauge
-volume_autoscaler_release_info{version="1.0.4"} 1.0
-# HELP volume_autoscaler_settings_info Settings currently used in this service
-# TYPE volume_autoscaler_settings_info gauge
-volume_autoscaler_settings_info{dry_run="false",http_timeout_seconds="15",interval_time_seconds="60",prometheus_label_match="",prometheus_url="http://prometheus-server",prometheus_version_detected="Unknown",scale_above_percent="80",scale_after_intervals="5",scale_cooldown_time_seconds="22200",scale_up_maximum_increment_bytes="16000000000000",scale_up_maximum_size_bytes="16000000000000",scale_up_minimum_increment_bytes="1000000000",scale_up_percent="20",verbose_enabled="false"} 1.0
-```
+| Metric Name                                | Type    | Description                                                        |
+|--------------------------------------------|---------|--------------------------------------------------------------------|
+| volume_autoscaler_resize_evaluated_total   | counter | Increased every time we evaluate resizing PVCs                     |
+| volume_autoscaler_resize_attempted_total   | counter | Increased every time we attempt to resize                          |
+| volume_autoscaler_resize_successful_total  | counter | Increased every time we successfully resize                        |
+| volume_autoscaler_resize_failure_total     | counter | Increased every time we fail to resize                             |
+| volume_autoscaler_num_valid_pvcs           | gauge   | The number of valid PVCs detected which we found to consider       |
+| volume_autoscaler_num_pvcs_above_threshold | gauge   | The number of PVCs detected above the desired percentage threshold |
+| volume_autoscaler_num_pvcs_below_threshold | gauge   | The number of PVCs detected below the desired percentage threshold |
+| volume_autoscaler_release_info             | info    | Version information in this volume autoscaler service (in label)   |
+| volume_autoscaler_settings_info            | info    | Settings currently used in this service (in labels)                |
 
 
 # Release History

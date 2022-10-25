@@ -88,9 +88,9 @@ kubernetes_core_api  = kubernetes.client.CoreV1Api()
 #############################
 # Simple header printing before the program starts, prints the variables this is configured for at runtime
 def printHeaderAndConfiguration():
-    print("---------------------------------------------------------------")
+    print("-------------------------------------------------------------------------------------------------------------")
     print("               Volume Autoscaler - Configuration               ")
-    print("---------------------------------------------------------------")
+    print("-------------------------------------------------------------------------------------------------------------")
     print("             Prometheus URL: {}".format(PROMETHEUS_URL))
     print("         Prometheus Version: {}{}".format(PROMETHEUS_VERSION," (upgrade to >= 2.30.0 to prevent some false positives)" if version.parse(PROMETHEUS_VERSION) < version.parse("2.30.0") else ""))
     print("          Prometheus Labels: {{{}}}".format(PROMETHEUS_LABEL_MATCH))
@@ -105,7 +105,7 @@ def printHeaderAndConfiguration():
     print("               Verbose Mode: is {}".format("ENABLED" if VERBOSE else "Disabled"))
     print("                    Dry Run: is {}".format("ENABLED, no scaling will occur!" if DRY_RUN else "Disabled"))
     print(" HTTP Timeouts for k8s/prom: is {} seconds".format(HTTP_TIMEOUT))
-    print("---------------------------------------------------------------")
+    print("-------------------------------------------------------------------------------------------------------------")
 
 
 # Figure out how many bytes to scale to based on the original size, scale up percent, minimum increment and maximum size
@@ -137,6 +137,14 @@ def calculateBytesToScaleTo(original_size, scale_up_percent, min_increment, max_
         print(e)
         return False
 
+# Check if is integer or float
+def is_integer_or_float(n):
+    try:
+        float(n)
+    except ValueError:
+        return False
+    else:
+        return float(n).is_integer()
 
 # Convert the K8s storage size definitions (eg: 10G, 5Ti, etc) into number of bytes
 def convert_storage_to_bytes(storage):
@@ -204,6 +212,9 @@ def try_numeric_format(bytes, size_multiplier, suffix, match_by_percentage = 0.1
 def convert_bytes_to_storage(bytes):
 
     # Todo: Add Petabytes/Exobytes?
+
+    # Ensure its an intger
+    bytes = int(bytes)
 
     # First, we'll try all base10 values...
     # Check if we can convert this into terrabytes
@@ -444,3 +455,17 @@ def send_kubernetes_event(namespace, name, reason, message, type="Normal"):
         print("Exception when calling CoreV1Api->create_namespaced_event: %s\n" % e)
     except:
         traceback.print_exc()
+
+# Print a sexy human readable dict for volume
+def print_human_readable_volume_dict(input_dict):
+    for key in input_dict:
+        print("    {}: {}".format(key.rjust(24), input_dict[key]), end='')
+        if key in ['volume_size_spec','volume_size_spec_bytes','volume_size_status','volume_size_status_bytes','scale_up_min_increment','scale_up_max_increment','scale_up_max_size'] and is_integer_or_float(input_dict[key]):
+            print(" ({})".format(convert_bytes_to_storage(input_dict[key])), end='')
+        if key in ['scale_cooldown_time']:
+            print(" ({})".format(time.strftime('%H:%M:%S', time.gmtime(input_dict[key]))), end='')
+        if key in ['last_resized_at']:
+            print(" ({})".format(time.strftime('%Y-%m-%d %H:%M:%S %Z %z', time.localtime(input_dict[key]))), end='')
+        if key in ['scale_up_percent','scale_above_percent']:
+            print("%", end='')
+        print("") # Newline

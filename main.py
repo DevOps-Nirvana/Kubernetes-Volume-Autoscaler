@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 import time
-from helpers import INTERVAL_TIME, PROMETHEUS_URL, DRY_RUN, VERBOSE, get_settings_for_prometheus_metrics
+from helpers import INTERVAL_TIME, PROMETHEUS_URL, DRY_RUN, VERBOSE, get_settings_for_prometheus_metrics, is_integer_or_float, print_human_readable_volume_dict
 from helpers import convert_bytes_to_storage, scale_up_pvc, testIfPrometheusIsAccessible, describe_all_pvcs, send_kubernetes_event
 from helpers import fetch_pvcs_from_prometheus, printHeaderAndConfiguration, calculateBytesToScaleTo, GracefulKiller
 from prometheus_client import start_http_server, Summary, Gauge, Counter, Info
@@ -97,8 +97,9 @@ if __name__ == "__main__":
                 if VERBOSE:
                     print("Volume {} is {}% in-use of the {} available".format(volume_description,volume_used_percent,pvcs_in_kubernetes[volume_description]['volume_size_status']))
                     print("  VERBOSE DETAILS:")
-                    for key in pvcs_in_kubernetes[volume_description]:
-                        print("    {}: {}".format(key, pvcs_in_kubernetes[volume_description][key]))
+                    print("-------------------------------------------------------------------------------------------------------------")
+                    print_human_readable_volume_dict(pvcs_in_kubernetes[volume_description])
+                    print("-------------------------------------------------------------------------------------------------------------")
 
                 # Check if we are NOT in an alert condition
                 if volume_used_percent < pvcs_in_kubernetes[volume_description]['scale_above_percent']:
@@ -152,8 +153,25 @@ if __name__ == "__main__":
 
                 # If our resize bytes failed for some reason, eg putting invalid data into the annotations on the PV
                 if resize_to_bytes == False:
-                    print("  Error/Exception while trying to determine what to resize to, values causing failure:")
+                    print("-------------------------------------------------------------------------------------------------------------")
+                    print("  Error/Exception while trying to determine what to resize to, volume causing failure:")
+                    print("-------------------------------------------------------------------------------------------------------------")
                     print(pvcs_in_kubernetes[volume_description])
+                    print("-------------------------------------------------------------------------------------------------------------")
+                    continue
+
+                # If our resize bytes is less than our original size (because the user set the max-bytes to something too low)
+                if resize_to_bytes < pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']:
+                    print("-------------------------------------------------------------------------------------------------------------")
+                    print("  Error/Exception while trying to scale this up.  Is it possible your maximum SCALE_UP_MAX_SIZE is too small?")
+                    print("-------------------------------------------------------------------------------------------------------------")
+                    print("   Maximum Size: {} ({})".format(pvcs_in_kubernetes[volume_description]['scale_up_max_size'], convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['scale_up_max_size'])))
+                    print("  Original Size: {} ({})".format(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes'], convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes'])))
+                    print("      Resize To: {} ({})".format(resize_to_bytes, convert_bytes_to_storage(resize_to_bytes)))
+                    print("-------------------------------------------------------------------------------------------------------------")
+                    print(" Volume causing failure:")
+                    print_human_readable_volume_dict(pvcs_in_kubernetes[volume_description])
+                    print("-------------------------------------------------------------------------------------------------------------")
                     continue
 
                 # Check if we are already at the max volume size (either globally, or this-volume specific)

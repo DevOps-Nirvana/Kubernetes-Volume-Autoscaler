@@ -29,6 +29,7 @@ aws s3 cp s3://devops-nirvana/helm-charts/index.yaml ./index.yaml
 cat index.yaml | \
 gsed "s/s3:/https:/g" | \
 gsed "s|devops-nirvana/helm-charts|devops-nirvana.s3.amazonaws.com/helm-charts|g" > indexnew.yaml
+diff index.yaml indexnew.yaml
 mv -f indexnew.yaml index.yaml
 aws s3 cp ./index.yaml s3://devops-nirvana/helm-charts/ --metadata-directive REPLACE --cache-control max-age=0,no-cache,no-store,must-revalidate --acl public-read --content-type 'text/plain'
 rm -f index.yaml

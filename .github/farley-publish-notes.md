@@ -8,8 +8,8 @@ cd helm-chart && ./update-templates-from-foundational-template.sh && cd ..
 # Lint check
 helm lint ./helm-chart --set name=test,namespace=test
 # Bump version.
-export PREVIOUS_RELEASE_TAG=1.0.3 # <---- NOTE: UPDATE ME BEFORE RUNNING THE BELOW
-export CI_COMMIT_TAG=1.0.4  # <---- NOTE: UPDATE ME BEFORE RUNNING THE BELOW
+export PREVIOUS_RELEASE_TAG=1.0.4 # <---- NOTE: UPDATE ME BEFORE RUNNING THE BELOW
+export CI_COMMIT_TAG=1.0.5  # <---- NOTE: UPDATE ME BEFORE RUNNING THE BELOW
 sed -i "s/1.0.0/$CI_COMMIT_TAG/g" helm-chart/Chart.yaml
 sed -i "s/latest/$CI_COMMIT_TAG/g" helm-chart/values.yaml
 # Package

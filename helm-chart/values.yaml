@@ -33,6 +33,8 @@ prometheus_label_match: ""
 http_timeout: "15"
 # For debugging
 verbose: "false"
+# Victoriametrics or prometheus
+victoriametrics_mode: "false"
 
 # Pretty much ignore anything below here I'd say, unless you really know what you're doing.  :)
 
@@ -103,6 +105,10 @@ globalEnvs:
   # How verbose to be during runtime.  Off by default, when enabled it prints every volume and their specifications on every iteration.  Recommended for testing/development and/or dry-runs
   - name: VERBOSE
     value: "{{ .Values.verbose }}"
+
+  # Which monitoring stack you're running
+  - name: VICTORIAMETRICS_MODE
+    value: "{{ .Values.victoriametrics_mode }}"
 
 
 # Additional pod annotations

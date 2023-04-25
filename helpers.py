@@ -38,6 +38,7 @@ PROMETHEUS_LABEL_MATCH = getenv('PROMETHEUS_LABEL_MATCH') or ''                 
 HTTP_TIMEOUT = int(getenv('HTTP_TIMEOUT', "15")) or 15                           # Allows to set the timeout for calls to Prometheus and Kubernetes.  This might be needed if your Prometheus or Kubernetes is over a remote WAN link with high latency and/or is heavily loaded
 PROMETHEUS_VERSION = "Unknown"                                                   # Used to detect the availability of a new function called present_over_time only available on Prometheus v2.30.0 or newer, this is auto-detected and updated, not set by a user
 VERBOSE = True if getenv('VERBOSE', "false").lower() == "true" else False        # If we want to verbose mode
+VICTORIAMETRICS_COMPAT = True if getenv('VICTORIAMETRICS_MODE', "false").lower() == "true" else False # Whether to skip the prometheus check and assume victoriametrics
 
 # Simple helper to pass back
 def get_settings_for_prometheus_metrics():
@@ -370,6 +371,11 @@ def scale_up_pvc(namespace, name, new_size):
 # Test if prometheus is accessible, and gets the build version so we know which function(s) are available or not, primarily for present_over_time below
 def testIfPrometheusIsAccessible(url):
     global PROMETHEUS_VERSION
+    if VICTORIAMETRICS_COMPAT:
+      # Victoriametrics roughly resembles a very recent prometheus
+      PROMETHEUS_VERSION = "2.41.0"
+      return # Victoria doesn't export stats/buildinfo endpoint, so just assume it's accessible.
+
     try:
         response = requests.get(url + '/api/v1/status/buildinfo', timeout=HTTP_TIMEOUT)
         if response.status_code != 200:
@@ -377,6 +383,7 @@ def testIfPrometheusIsAccessible(url):
         response_object = response.json()
         PROMETHEUS_VERSION = response_object['data']['version']
     except Exception as e:
+        print("Failed to verify that prometheus is accessible!")
         print(e)
         exit(-1)
 

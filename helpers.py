@@ -302,24 +302,59 @@ def convert_pvc_to_simpler_dict(pvc):
     return_dict['ignore']                 = False
 
     # Override defaults with annotations on the PVC
-    if 'volume.autoscaler.kubernetes.io/last-resized-at' in pvc.metadata.annotations:
-        return_dict['last_resized_at'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/last-resized-at'])
-    if 'volume.autoscaler.kubernetes.io/scale-above-percent' in pvc.metadata.annotations:
-        return_dict['scale_above_percent'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-above-percent'])
-    if 'volume.autoscaler.kubernetes.io/scale-after-intervals' in pvc.metadata.annotations:
-        return_dict['scale_after_intervals'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-after-intervals'])
-    if 'volume.autoscaler.kubernetes.io/scale-up-percent' in pvc.metadata.annotations:
-        return_dict['scale_up_percent'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-up-percent'])
-    if 'volume.autoscaler.kubernetes.io/scale-up-min-increment' in pvc.metadata.annotations:
-        return_dict['scale_up_min_increment'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-up-min-increment'])
-    if 'volume.autoscaler.kubernetes.io/scale-up-max-increment' in pvc.metadata.annotations:
-        return_dict['scale_up_max_increment'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-up-max-increment'])
-    if 'volume.autoscaler.kubernetes.io/scale-up-max-size' in pvc.metadata.annotations:
-        return_dict['scale_up_max_size'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-up-max-size'])
-    if 'volume.autoscaler.kubernetes.io/scale-cooldown-time' in pvc.metadata.annotations:
-        return_dict['scale_cooldown_time'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-cooldown-time'])
-    if 'volume.autoscaler.kubernetes.io/ignore' in pvc.metadata.annotations and pvc.metadata.annotations['volume.autoscaler.kubernetes.io/ignore'].lower() == "true":
-        return_dict['ignore'] = True
+    try:
+        if 'volume.autoscaler.kubernetes.io/last-resized-at' in pvc.metadata.annotations:
+            return_dict['last_resized_at'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/last-resized-at'])
+    except Exception as e:
+        print("Could not convert last_resized_at to int: {}".format(e))
+
+    try:
+        if 'volume.autoscaler.kubernetes.io/scale-above-percent' in pvc.metadata.annotations:
+            return_dict['scale_above_percent'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-above-percent'])
+    except Exception as e:
+        print("Could not convert scale_above_percent to int: {}".format(e))
+
+    try:
+        if 'volume.autoscaler.kubernetes.io/scale-after-intervals' in pvc.metadata.annotations:
+            return_dict['scale_after_intervals'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-after-intervals'])
+    except Exception as e:
+        print("Could not convert scale_after_intervals to int: {}".format(e))
+
+    try:
+        if 'volume.autoscaler.kubernetes.io/scale-up-percent' in pvc.metadata.annotations:
+            return_dict['scale_up_percent'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-up-percent'])
+    except:
+        print("Could not convert scale_up_percent to int: {}".format(e))
+
+    try:
+        if 'volume.autoscaler.kubernetes.io/scale-up-min-increment' in pvc.metadata.annotations:
+            return_dict['scale_up_min_increment'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-up-min-increment'])
+    except Exception as e:
+        print("Could not convert scale_up_min_increment to int: {}".format(e))
+
+    try:
+        if 'volume.autoscaler.kubernetes.io/scale-up-max-increment' in pvc.metadata.annotations:
+            return_dict['scale_up_max_increment'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-up-max-increment'])
+    except Exception as e:
+        print("Could not convert scale_up_max_increment to int: {}".format(e))
+
+    try:
+        if 'volume.autoscaler.kubernetes.io/scale-up-max-size' in pvc.metadata.annotations:
+            return_dict['scale_up_max_size'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-up-max-size'])
+    except:
+        print("Could not convert scale_up_max_size to int: {}".format(e))
+
+    try:
+        if 'volume.autoscaler.kubernetes.io/scale-cooldown-time' in pvc.metadata.annotations:
+            return_dict['scale_cooldown_time'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-cooldown-time'])
+    except Exception as e:
+        print("Could not convert scale_cooldown_time to int: {}".format(e))
+
+    try:
+        if 'volume.autoscaler.kubernetes.io/ignore' in pvc.metadata.annotations and pvc.metadata.annotations['volume.autoscaler.kubernetes.io/ignore'].lower() == "true":
+            return_dict['ignore'] = True
+    except Exception as e:
+        print("Could not convert ignore to bool: {}".format(e))
 
     # Return our cleaned up and simple flat dict with the values we care about, with overrides if specified
     return return_dict

@@ -139,7 +139,9 @@ resources: {}
 
 # Assign pods to nodes based on nodeSelector labels, define a default here if desired
 # To use below, remove the {} and uncomment the following 1 lines and/or add your own lines
-nodeSelector: []
+nodeSelector:
+  # This runs on Linux only
+  kubernetes.io/os: linux
 # purpose: node-feature-name
 
 # Assign pods to nodes based on tolerations and taints

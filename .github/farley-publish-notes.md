@@ -8,8 +8,8 @@ cd helm-chart && ./update-templates-from-foundational-template.sh && cd ..
 # Lint check
 helm lint ./helm-chart --set name=test,namespace=test
 # Bump version.
-export PREVIOUS_RELEASE_TAG=1.0.4 # <---- NOTE: UPDATE ME BEFORE RUNNING THE BELOW
-export CI_COMMIT_TAG=1.0.5  # <---- NOTE: UPDATE ME BEFORE RUNNING THE BELOW
+export PREVIOUS_RELEASE_TAG=1.0.5 # <---- NOTE: UPDATE ME BEFORE RUNNING THE BELOW
+export CI_COMMIT_TAG=1.0.6  # <---- NOTE: UPDATE ME BEFORE RUNNING THE BELOW
 sed -i "s/1.0.0/$CI_COMMIT_TAG/g" helm-chart/Chart.yaml
 sed -i "s/latest/$CI_COMMIT_TAG/g" helm-chart/values.yaml
 # Package
@@ -39,6 +39,12 @@ rm -f index.yaml
 sed -i "s/$PREVIOUS_RELEASE_TAG/$CI_COMMIT_TAG/g" README.md
 # WARNING: Go manually update README to fix up the changelog version area, one will be edited accidentally because of the above SED
 git add .github/farley-publish-notes.md README.md
+# Reset these two files
+git checkout helm-chart/Chart.yaml
+git checkout helm-chart/values.yaml
+# Review
+git status
+# Commit
 git commit -m "version bump to $CI_COMMIT_TAG"
 
 # Rename files to publish to Github Release

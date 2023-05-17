@@ -1,6 +1,6 @@
 # Kubernetes Volume / Disk Autoscaler (via Prometheus)
 
-<a href="https://hub.docker.com/r/devopsnirvana/kubernetes-volume-autoscaler"><img src="https://img.shields.io/docker/pulls/devopsnirvana/kubernetes-volume-autoscaler?style=plastic" alt="Docker Hub Pulls"></a> <a href="https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.5"><img src="https://img.shields.io/docker/v/devopsnirvana/kubernetes-volume-autoscaler/1.0.5?label=Latest%20Release&style=plastic" alt="Latest Release"></a> <a href="https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/stargazers"><img src="https://img.shields.io/github/stars/DevOps-Nirvana/Kubernetes-Volume-Autoscaler?style=social" alt="Stargazers on Github"></a>
+<a href="https://hub.docker.com/r/devopsnirvana/kubernetes-volume-autoscaler"><img src="https://img.shields.io/docker/pulls/devopsnirvana/kubernetes-volume-autoscaler?style=plastic" alt="Docker Hub Pulls"></a> <a href="https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.6"><img src="https://img.shields.io/docker/v/devopsnirvana/kubernetes-volume-autoscaler/1.0.6?label=Latest%20Release&style=plastic" alt="Latest Release"></a> <a href="https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/stargazers"><img src="https://img.shields.io/github/stars/DevOps-Nirvana/Kubernetes-Volume-Autoscaler?style=social" alt="Stargazers on Github"></a>
 
 This repository contains a [Kubernetes controller](https://kubernetes.io/docs/concepts/architecture/controller/) that automatically increases the size of a Persistent Volume Claim (PVC) in Kubernetes when it is nearing full. Initially engineered based on AWS EKS, this should support any Kubernetes cluster or cloud provider which supports dynamically hot-resizing storage volumes in Kubernetes.
 
@@ -107,15 +107,15 @@ helm uninstall volume-autoscaler
 # the namespace you can run the first few commands below...
 
 # IF YOU USE `infrastructure` AS THE NAMESPACE FOR PROMETHEUS SIMPLY...
-kubectl --namespace infrastructure apply https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.5.yaml
+kubectl --namespace infrastructure apply https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.6.yaml
 
 # OR, IF YOU NEED TO CHANGE THE NAMESPACE...
 # #1: Download the yaml...
-wget https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.5.yaml
+wget https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.6.yaml
 # #1: Or download with curl
-curl https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.5.yaml -o volume-autoscaler-1.0.5.yaml
+curl https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.6.yaml -o volume-autoscaler-1.0.6.yaml
 # #2: Then replace the namespace in this, replacing
-cat volume-autoscaler-1.0.5.yaml | sed 's/"infrastructure"/"PROMETHEUS_NAMESPACE_HERE"/g' > ./to_be_applied.yaml
+cat volume-autoscaler-1.0.6.yaml | sed 's/"infrastructure"/"PROMETHEUS_NAMESPACE_HERE"/g' > ./to_be_applied.yaml
 # #3: If you wish to have slack notifications, edit this to_be_applied.yaml and embed your webhook on the value: line for SLACK_WEBHOOK and set the SLACK_CHANNEL as well accordingly
 # #4: Finally, apply it...
 kubectl --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE apply ./to_be_applied.yaml
@@ -172,9 +172,9 @@ metadata:
     # This is the largest disk size ever allowed for this tool to scale up to.  This is set to 16TB by default, because that's the limit of AWS EBS
     volume.autoscaler.kubernetes.io/scale-up-max-size: "16000000000000"  # 16TB by default (in bytes)
     # How long (in seconds) we must wait before scaling this volume again.  For AWS EBS, this is 6 hours which is 21600 seconds but for good measure we add an extra 10 minutes to this, so 22200
-    volume.autoscaler.kubernetes.io/scale-cooldown-time: "22200"  
+    volume.autoscaler.kubernetes.io/scale-cooldown-time: "22200"
     # If you want the autoscaler to completely ignore/skip this PVC, set this to "true"
-    volume.autoscaler.kubernetes.io/ignore: "false"  
+    volume.autoscaler.kubernetes.io/ignore: "false"
     # Finally, Do not set this, and if you see this ignore this, this is how Volume Autoscaler keeps its "state"
     volume.autoscaler.kubernetes.io/last-resized-at: "123123123"  # This will be an Unix epoch timestamp
 spec:
@@ -206,7 +206,17 @@ This controller also supports publishing prometheus metrics automatically.  It h
 
 # Release History
 
-### [Current Release: 1.0.5 - Oct 26, 2022](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.5)
+### [Current Release: 1.0.6 - Oct 26, 2022](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.6)
+```
+Minor textual changes, grammar, etc (thanks @anthea-w)
+Implement victoriametrics mode (#8) (thanks @martin31821)
+Upgrade base docker image to python:3.9.16-alpine3.17 (#5) (thanks @sindvero / @abenoist)
+Modified helm chart to add Linux node selector, as this only on linux
+Adding compatibility for up at least Kubernetes 1.25 (tested)
+Fixing a fatal error that occurred
+```
+
+### [Release: 1.0.5 - Oct 26, 2022](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.6)
 ```
 Handling low max disk size edge-case better (thanks @GuillaumeOuint)
 Human-readable debug output much improved
@@ -268,10 +278,6 @@ This todo list is mostly for the Author(s), but any contributions are also welco
 * Make it possible to autoscale up node's root volumes?  This will require significant engineering, as this would require talking to the provider APIs, and require an IAM/OIDC/AccessKey/etc to be able to scale the root volume up.  Likely very challenging, but would be ideal to handle.  Consider writing a new service dedicated for this instead.
 * Add filter to allow users to specify only which StorageClasses to support, default of "all" or "*"
 
-# Alternative services
-
-Here is another similar service to this.  Its written in Golang, but it lacks some of the configurability that this tool has currently.  Check it out https://github.com/topolvm/pvc-autoresizer/
-
 # Notes for Development
 
 This tool can easily be run locally, as long as you have an functioning kubectl config, and as long as you can reach the http(s) endpoint for your cluster's prometheus.  If your prometheus is internal-only, you may need to have an VPN setup into your VPC/Cluster.  I recommend OpenVPN if you're installing one in your Kubernetes cluster.
@@ -279,9 +285,9 @@ This tool can easily be run locally, as long as you have an functioning kubectl 
 ```bash
 # To test out/develop new features, first get your Prometheus IP address...
 kubectl get services --all-namespaces | grep -i prometheus-server
-infrastructure  prometheus-server  ClusterIP  10.100.57.102  <none>  80/TCP  109d
+infrastructure  prometheus-server  ClusterIP  10.1.0.67.102  <none>  80/TCP  109d
 # Then take its IP address and check if you can use it...
-curl http://10.100.57.102
+curl http://10.1.0.67.102
 <a href="/graph">Found</a>
 # Alternatively, if your ops/devops person setup an ingress to make this accessible externally...
 curl https://prometheus.mycompany.com

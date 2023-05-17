@@ -6,7 +6,7 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt && \
 # Due to CVE-2022-40897 removing setuptools
-    pip uninstall setuptools
+    pip install setuptools --upgrade
 
 # Install our code
 COPY *.py ./

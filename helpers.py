@@ -324,7 +324,7 @@ def convert_pvc_to_simpler_dict(pvc):
     try:
         if 'volume.autoscaler.kubernetes.io/scale-up-percent' in pvc.metadata.annotations:
             return_dict['scale_up_percent'] = int(pvc.metadata.annotations['volume.autoscaler.kubernetes.io/scale-up-percent'])
-    except:
+    except Exception as e:
         print("Could not convert scale_up_percent to int: {}".format(e))
 
     try:

@@ -38,6 +38,9 @@ http_timeout: "15"
 verbose: "false"
 # Victoriametrics or prometheus
 victoriametrics_mode: "false"
+# Auth header for mimir or cortex
+scope_orgid_auth_header: ""
+
 
 # Pretty much ignore anything below here I'd say, unless you really know what you're doing.  :)
 
@@ -116,6 +119,10 @@ globalEnvs:
   # Which monitoring stack you're running
   - name: VICTORIAMETRICS_MODE
     value: "{{ .Values.victoriametrics_mode }}"
+
+  # If you are using Cortex or Mimir you'll probably need to set an scope OrgID auth header for it
+  - name: SCOPE_ORGID_AUTH_HEADER
+    value: "{{ .Values.scope_orgid_auth_header }}"
 
 
 # Additional pod annotations

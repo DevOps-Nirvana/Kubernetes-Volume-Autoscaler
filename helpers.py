@@ -39,6 +39,8 @@ HTTP_TIMEOUT = int(getenv('HTTP_TIMEOUT', "15")) or 15                          
 PROMETHEUS_VERSION = "Unknown"                                                   # Used to detect the availability of a new function called present_over_time only available on Prometheus v2.30.0 or newer, this is auto-detected and updated, not set by a user
 VERBOSE = True if getenv('VERBOSE', "false").lower() == "true" else False        # If we want to verbose mode
 VICTORIAMETRICS_COMPAT = True if getenv('VICTORIAMETRICS_MODE', "false").lower() == "true" else False # Whether to skip the prometheus check and assume victoriametrics
+SCOPE_ORGID_AUTH_HEADER = getenv('SCOPE_ORGID_AUTH_HEADER') or ''                # If we want to use Mimir or AgentMode which requires an orgid header.  See: https://grafana.com/docs/mimir/latest/references/http-api/#authentication
+
 
 # Simple helper to pass back
 def get_settings_for_prometheus_metrics():
@@ -58,6 +60,11 @@ def get_settings_for_prometheus_metrics():
         'http_timeout_seconds': str(HTTP_TIMEOUT),
         'verbose_enabled': "true" if VERBOSE else "false",
     }
+
+# Set headers if desired from above
+headers = {}
+if len(SCOPE_ORGID_AUTH_HEADER) > 0:
+    headers['X-Scope-OrgID'] = SCOPE_ORGID_AUTH_HEADER
 
 # This handler helps handle sigint/term gracefully (not in the middle of an runloop)
 class GracefulKiller:
@@ -412,7 +419,7 @@ def testIfPrometheusIsAccessible(url):
       return # Victoria doesn't export stats/buildinfo endpoint, so just assume it's accessible.
 
     try:
-        response = requests.get(url + '/api/v1/status/buildinfo', timeout=HTTP_TIMEOUT)
+        response = requests.get(url + '/api/v1/status/buildinfo', timeout=HTTP_TIMEOUT, headers=headers)
         if response.status_code != 200:
             raise Exception("ERROR: Received status code {} while trying to initialize on Prometheus: {}".format(response.status_code, url))
         response_object = response.json()
@@ -428,9 +435,9 @@ def fetch_pvcs_from_prometheus(url, label_match=PROMETHEUS_LABEL_MATCH):
 
     # This only works on Prometheus v2.30.0 or newer, using this helps prevent false-negatives only returning recent pvcs (in the last hour)
     if version.parse(PROMETHEUS_VERSION) >= version.parse("2.30.0"):
-        response = requests.get(url + '/api/v1/query', params={'query': "ceil((1 - kubelet_volume_stats_available_bytes{{ {} }} / kubelet_volume_stats_capacity_bytes)*100) and present_over_time(kubelet_volume_stats_available_bytes{{ {} }}[1h])".format(label_match,label_match)}, timeout=HTTP_TIMEOUT)
+        response = requests.get(url + '/api/v1/query', params={'query': "ceil((1 - kubelet_volume_stats_available_bytes{{ {} }} / kubelet_volume_stats_capacity_bytes)*100) and present_over_time(kubelet_volume_stats_available_bytes{{ {} }}[1h])".format(label_match,label_match)}, timeout=HTTP_TIMEOUT, headers=headers)
     else:
-        response = requests.get(url + '/api/v1/query', params={'query': "ceil((1 - kubelet_volume_stats_available_bytes{{ {} }} / kubelet_volume_stats_capacity_bytes)*100)".format(label_match,label_match)}, timeout=HTTP_TIMEOUT)
+        response = requests.get(url + '/api/v1/query', params={'query': "ceil((1 - kubelet_volume_stats_available_bytes{{ {} }} / kubelet_volume_stats_capacity_bytes)*100)".format(label_match,label_match)}, timeout=HTTP_TIMEOUT, headers=headers)
 
     response_object = response.json()
 

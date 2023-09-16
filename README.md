@@ -188,6 +188,28 @@ spec:
 ```
 
 
+## Victoriametrics compatibility
+
+If you are using victoriametrics in the helm chart simply set this value to true as follows...
+
+```bash
+helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
+  --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE \
+  --set "victoriametrics_mode=true"
+```
+
+
+# Mimir or Cortex compatibility
+
+If you are using Mimir or Cortex you will need to add an authentication header into our requests to Prometheus for them to function.  To do this, simply set a value in our helm chart as follows.  For more details see the [Mimir documentation on Authentication](https://grafana.com/docs/mimir/latest/references/http-api/#authentication) or the [Grafana Mimir docs here](https://grafana.com/docs/mimir/latest/operators-guide/secure/authentication-and-authorization/#grafana-mimir-authentication-and-authorization)
+
+```bash
+helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
+  --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE \
+  --set "scope_orgid_auth_header=tenant-1|tenant-2|tenant-3"
+```
+
+
 ## Prometheus Metrics Supported
 
 This controller also supports publishing prometheus metrics automatically.  It hosts a simple http server on port 8000 and publishes the following metrics
@@ -323,3 +345,5 @@ The following environment variables are settable during development to alter the
 | PROMETHEUS_LABEL_MATCH |                | A PromQL label query to restrict volumes for this to see and scale, without braces. eg: 'namespace="dev"' |
 | HTTP_TIMEOUT           | 15             | Allows to set the timeout for calls to Prometheus and Kubernetes. Adjust this if your Prometheus or Kubernetes is over a remote WAN link with high latency and/or is heavily loaded |
 | VERBOSE                | false          | If we want to verbose mode, prints out the raw data from each PVC and its status/state instead of the default "" |
+| VICTORIAMETRICS_COMPAT  | false          | Whether to skip the prometheus check and assume victoriametrics |
+| SCOPE_ORGID_AUTH_HEADER |                | The auth header to set when using Mimir or Cortex see [Mimir docs](https://grafana.com/docs/mimir/latest/references/http-api/#authentication) |

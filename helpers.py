@@ -105,8 +105,9 @@ class Cache:
     def reset(self):
         self.cache = {}
 
-# Note: We want the TTL time to be 5x the interval time by default to ensure items in it last through a few intervals incase of jitter
-cache = Cache(ttl=INTERVAL_TIME * 5)
+# Note: We want the TTL time to be 10x the interval time by default to ensure items in it
+#       last through a few intervals incase of jitter and for debouncing volume changes
+cache = Cache(ttl=INTERVAL_TIME * 10)
 
 
 #############################

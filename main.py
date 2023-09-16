@@ -182,6 +182,11 @@ if __name__ == "__main__":
                     print("  IGNORING scaling this because the ignore annotation was set to true")
                     continue
 
+                # Lets debounce this incase we did this resize last interval(s)
+                if cache.get(f"{volume_description}-has-been-resized"):
+                    print("  DEBOUNCING and skipping this scaling, we resized within recent intervals")
+                    continue
+
                 # Check if we are DRY-RUN-ing and won't do anything
                 if DRY_RUN:
                     print("  DRY RUN was set, but we would have resized this disk from {} to {}".format(convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']), convert_bytes_to_storage(resize_to_bytes)))
@@ -206,8 +211,10 @@ if __name__ == "__main__":
 
                 if scale_up_pvc(volume_namespace, volume_name, resize_to_bytes):
                     PROMETHEUS_METRICS['resize_successful'].inc()
-                    status_output = "Successfully requested {}".format(status_output)
+                    # Save this to cache for debouncing
+                    cache.set(f"{volume_description}-has-been-resized", True)
                     # Print success to console
+                    status_output = "Successfully requested {}".format(status_output)
                     print(status_output)
                     # Intentionally skipping sending an event to Kubernetes on success, the above event is enough for now until we detect if resize succeeded
                     # Print success to Slack
@@ -216,8 +223,8 @@ if __name__ == "__main__":
                         slack.send(status_output)
                 else:
                     PROMETHEUS_METRICS['resize_failure'].inc()
-                    status_output = "FAILED requesting {}".format(status_output)
                     # Print failure to console
+                    status_output = "FAILED requesting {}".format(status_output)
                     print(status_output)
                     # Print failure to Kubernetes Events
                     send_kubernetes_event(

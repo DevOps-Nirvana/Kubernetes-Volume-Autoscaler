@@ -2,7 +2,9 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - master
+      - fixing-vulnerabilities-september-2023
     tags:
       - "*"
 

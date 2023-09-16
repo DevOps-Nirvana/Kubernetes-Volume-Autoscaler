@@ -76,6 +76,39 @@ class GracefulKiller:
   def exit_gracefully(self, *args):
     self.kill_now = True
 
+
+# Setup a cache helper for caching and expiring things with TTLs, used for debouncing
+class Cache:
+    def __init__(self, ttl=300):
+        self.ttl = ttl
+        self.cache = {}
+
+    def set(self, key, value, ttl=False):
+        expiration = time.time() + self.ttl
+        if ttl != False:
+            expiration = time.time() + ttl
+        self.cache[key] = (value, expiration)
+
+    def get(self, key):
+        if key in self.cache:
+            value, expiration = self.cache[key]
+            if time.time() < expiration:
+                return value
+            else:
+                del self.cache[key]
+        return None
+
+    def unset(self, key):
+        if key in self.cache:
+            del self.cache[key]
+
+    def reset(self):
+        self.cache = {}
+
+
+cache = Cache(ttl=300)
+
+
 #############################
 # Initialize Kubernetes
 #############################

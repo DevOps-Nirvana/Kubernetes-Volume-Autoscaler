@@ -3,7 +3,7 @@ import os
 import time
 from helpers import INTERVAL_TIME, PROMETHEUS_URL, DRY_RUN, VERBOSE, get_settings_for_prometheus_metrics, is_integer_or_float, print_human_readable_volume_dict
 from helpers import convert_bytes_to_storage, scale_up_pvc, testIfPrometheusIsAccessible, describe_all_pvcs, send_kubernetes_event
-from helpers import fetch_pvcs_from_prometheus, printHeaderAndConfiguration, calculateBytesToScaleTo, GracefulKiller
+from helpers import fetch_pvcs_from_prometheus, printHeaderAndConfiguration, calculateBytesToScaleTo, GracefulKiller, cache
 from prometheus_client import start_http_server, Summary, Gauge, Counter, Info
 import slack
 import sys, traceback
@@ -28,7 +28,6 @@ PROMETHEUS_METRICS['settings'] = Info('volume_autoscaler_settings', 'Settings cu
 PROMETHEUS_METRICS['settings'].info(get_settings_for_prometheus_metrics())
 
 # Other globals
-IN_MEMORY_STORAGE = {}
 MAIN_LOOP_TIME = 1
 
 # Entry point and main application loop
@@ -104,8 +103,7 @@ if __name__ == "__main__":
                 # Check if we are NOT in an alert condition
                 if volume_used_percent < pvcs_in_kubernetes[volume_description]['scale_above_percent']:
                     PROMETHEUS_METRICS['num_pvcs_below_threshold'].inc()
-                    if volume_description in IN_MEMORY_STORAGE:
-                        del IN_MEMORY_STORAGE[volume_description]
+                    cache.unset(volume_description)
                     if VERBOSE:
                         print(" and is not above {}%".format(pvcs_in_kubernetes[volume_description]['scale_above_percent']))
                     continue
@@ -113,19 +111,19 @@ if __name__ == "__main__":
                     PROMETHEUS_METRICS['num_pvcs_above_threshold'].inc()
 
                 # If we are in alert condition, record this in our simple in-memory counter
-                if volume_description in IN_MEMORY_STORAGE:
-                    IN_MEMORY_STORAGE[volume_description] = IN_MEMORY_STORAGE[volume_description] + 1
+                if cache.get(volume_description):
+                    cache.set(volume_description, cache.get(volume_description) + 1)
                 else:
-                    IN_MEMORY_STORAGE[volume_description] = 1
+                    cache.set(volume_description, 1)
                 # Incase we aren't verbose, and didn't print this above, now that we're in alert we will print this
                 if not VERBOSE:
                     print("Volume {} is {}% in-use of the {} available".format(volume_description,volume_used_percent,pvcs_in_kubernetes[volume_description]['volume_size_status']))
                 # Print the alert status
                 print("  BECAUSE it is above {}% used".format(pvcs_in_kubernetes[volume_description]['scale_above_percent']))
-                print("  ALERT has been for {} period(s) which needs to at least {} period(s) to scale".format(IN_MEMORY_STORAGE[volume_description], pvcs_in_kubernetes[volume_description]['scale_after_intervals']))
+                print("  ALERT has been for {} period(s) which needs to at least {} period(s) to scale".format(cache.get(volume_description), pvcs_in_kubernetes[volume_description]['scale_after_intervals']))
 
                 # Check if we are NOT in a possible scale condition
-                if IN_MEMORY_STORAGE[volume_description] < pvcs_in_kubernetes[volume_description]['scale_after_intervals']:
+                if cache.get(volume_description) < pvcs_in_kubernetes[volume_description]['scale_after_intervals']:
                     print("  BUT need to wait for {} intervals in alert before considering to scale".format( pvcs_in_kubernetes[volume_description]['scale_after_intervals'] ))
                     print("  FYI this has desired_size {} and current size {}".format( convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_spec_bytes']), convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes'])))
                     continue
@@ -198,7 +196,7 @@ if __name__ == "__main__":
                     convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']),
                     convert_bytes_to_storage(resize_to_bytes),
                     pvcs_in_kubernetes[volume_description]['scale_above_percent'],
-                    IN_MEMORY_STORAGE[volume_description] * INTERVAL_TIME
+                    cache.get(volume_description) * INTERVAL_TIME
                 )
                 # Send event that we're starting to request a resize
                 send_kubernetes_event(

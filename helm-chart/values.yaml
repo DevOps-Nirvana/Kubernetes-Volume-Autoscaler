@@ -248,6 +248,7 @@ rbac:
 # This is to use new kubernetes standard labeling, should be true on both always
 usingNewRecommendedLabels: true
 labelsEnableDefault: true
+usingMemoryKibiBytesEnvs: false
 
 # We don't use a lot of features from the upstream chart, so disable them
 podDistuptionBudget:

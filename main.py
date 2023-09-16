@@ -226,7 +226,7 @@ if __name__ == "__main__":
                         message=status_output, type="Warning"
                     )
                     # Print failure to Slack
-                    if SLACK_WEBHOOK_URL and len(SLACK_WEBHOOK_URL) > 0:
+                    if slack.SLACK_WEBHOOK_URL and len(slack.SLACK_WEBHOOK_URL) > 0:
                         slack.send(status_output, severity="error")
 
             except Exception:

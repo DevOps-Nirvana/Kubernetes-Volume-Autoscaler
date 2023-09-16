@@ -203,6 +203,7 @@ livenessProbe:
   successThreshold: 1
   failureThreshold: 3
   probeType: httpGet
+  scheme: HTTP
   path: /alive
   port: default-service
 readinessProbe:
@@ -213,6 +214,7 @@ readinessProbe:
   successThreshold: 2
   failureThreshold: 2
   probeType: httpGet
+  scheme: HTTP
   path: /ready
   port: default-service
 

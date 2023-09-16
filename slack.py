@@ -40,6 +40,7 @@ def getEmojiFromSeverity(severity):
 # Default webhook (paste yours here if you want to not have to provide it on the CLI)
 SLACK_WEBHOOK_URL = os.getenv('SLACK_WEBHOOK_URL', "")
 SLACK_CHANNEL = os.getenv('SLACK_CHANNEL', "devops")
+
 # Slack message prefix/suffixes
 SLACK_MESSAGE_PREFIX = os.getenv('SLACK_MESSAGE_PREFIX', "")
 if len(SLACK_MESSAGE_PREFIX) > 0:
@@ -47,7 +48,6 @@ if len(SLACK_MESSAGE_PREFIX) > 0:
 SLACK_MESSAGE_SUFFIX = os.getenv('SLACK_MESSAGE_SUFFIX', "")
 if len(SLACK_MESSAGE_SUFFIX) > 0:
      SLACK_MESSAGE_SUFFIX = (" " + SLACK_MESSAGE_SUFFIX).strip()
-
 
 # Usage and CLI opts handling
 usage = '  \n\

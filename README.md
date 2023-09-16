@@ -77,7 +77,8 @@ helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
 helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
   --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE \
   --set "slack_webhook_url=https://hooks.slack.com/services/123123123/4564564564/789789789789789789" \
-  --set "slack_channel=my-slack-channel-name"
+  --set "slack_channel=my-slack-channel-name" \
+  --set "slack_prefix=This is my dev cluster"
 ```
 
 There are also various other variables you're able to set as easily as above. Please see: [values.yaml](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/blob/master/helm-chart/values.yaml#L9) for all the simple values to adjust this service. In addition, review the rest of that file if you'd like to adjust other things (like resource limits, node selectors, taints/tolerances, adding labels, etc).
@@ -307,6 +308,10 @@ The following environment variables are settable during development to alter the
 |------------------------|----------------|-------------|
 | INTERVAL_TIME          | 60             | How often (in seconds) to scan Prometheus for checking if we need to resize |
 | SCALE_ABOVE_PERCENT    | 80             | What percent out of 100 the volume must be consuming before considering to scale it |
+| SLACK_WEBHOOK          |                | A Slack webhook to automatically send alerts to upon resizing |
+| SLACK_CHANNEL          | devops         | The default Slack channel to send alerts to (if your webhook is allowed to send to different channels) |
+| SLACK_MESSAGE_PREFIX   |                | A prefix added to every Slack message send, to alert or inform you of what cluster it is on |
+| SLACK_MESSAGE_SUFFIX   |                | A suffix added to every Slack message send, to alert or inform you of what cluster it is on |
 | SCALE_AFTER_INTERVALS  | 5              | How many intervals of INTERVAL_TIME a volume must be above SCALE_ABOVE_PERCENT before we scale |
 | SCALE_UP_PERCENT       | 20             | How much percent of the current volume size to scale up by. (100 == (if disk is 10GB, scale to 20GB), eg: 20 == (if disk is 10GB, scale to 12GB) |
 | SCALE_UP_MIN_INCREMENT | 1000000000     | How many bytes is the minimum that we can resize up by, default is 1GB (in bytes, so 1000000000) |

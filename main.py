@@ -214,6 +214,7 @@ if __name__ == "__main__":
                     # Intentionally skipping sending an event to Kubernetes on success, the above event is enough for now until we detect if resize succeeded
                     # Print success to Slack
                     if slack.SLACK_WEBHOOK_URL and len(slack.SLACK_WEBHOOK_URL) > 0:
+                        print(f"Sending slack message to {slack.SLACK_CHANNEL}")
                         slack.send(status_output)
                 else:
                     PROMETHEUS_METRICS['resize_failure'].inc()
@@ -227,6 +228,7 @@ if __name__ == "__main__":
                     )
                     # Print failure to Slack
                     if slack.SLACK_WEBHOOK_URL and len(slack.SLACK_WEBHOOK_URL) > 0:
+                        print(f"Sending slack message to {slack.SLACK_CHANNEL}")
                         slack.send(status_output, severity="error")
 
             except Exception:

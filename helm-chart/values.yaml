@@ -10,6 +10,9 @@ prometheus_url: ""
 # This is how we confiure the Slack integration, set the two values below
 slack_webhook_url: "REPLACEME"
 slack_channel: "REPLACEME"
+# Our slack message prefix and suffix.  Optional, can use to help distinguish between different clusters or to alert someone
+slack_message_prefix: ""
+slack_message_suffix: ""
 # Our scan interval
 interval_time: "60"
 # How many scan intervals in alert before scaling
@@ -35,6 +38,9 @@ http_timeout: "15"
 verbose: "false"
 # Victoriametrics or prometheus
 victoriametrics_mode: "false"
+# Auth header for mimir or cortex
+scope_orgid_auth_header: ""
+
 
 # Pretty much ignore anything below here I'd say, unless you really know what you're doing.  :)
 
@@ -59,11 +65,15 @@ globalEnvs:
   - name: PROMETHEUS_URL
     value: "{{ .Values.prometheus_url }}"
 
-  # This is how we confiure the Slack integration, set the two values below
+  # This is how we confiure the Slack integration, set the values below
   - name: SLACK_WEBHOOK_URL
     value: "{{ .Values.slack_webhook_url }}"
   - name: SLACK_CHANNEL
     value: "{{ .Values.slack_channel }}"
+  - name: SLACK_MESSAGE_PREFIX
+    value: "{{ .Values.slack_message_prefix }}"
+  - name: SLACK_MESSAGE_SUFFIX
+    value: "{{ .Values.slack_message_suffix }}"
 
   # Our scan interval
   - name: INTERVAL_TIME
@@ -109,6 +119,10 @@ globalEnvs:
   # Which monitoring stack you're running
   - name: VICTORIAMETRICS_MODE
     value: "{{ .Values.victoriametrics_mode }}"
+
+  # If you are using Cortex or Mimir you'll probably need to set an scope OrgID auth header for it
+  - name: SCOPE_ORGID_AUTH_HEADER
+    value: "{{ .Values.scope_orgid_auth_header }}"
 
 
 # Additional pod annotations
@@ -241,6 +255,7 @@ rbac:
 # This is to use new kubernetes standard labeling, should be true on both always
 usingNewRecommendedLabels: true
 labelsEnableDefault: true
+usingMemoryKibiBytesEnvs: false
 
 # We don't use a lot of features from the upstream chart, so disable them
 podDistuptionBudget:

@@ -77,7 +77,8 @@ helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
 helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
   --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE \
   --set "slack_webhook_url=https://hooks.slack.com/services/123123123/4564564564/789789789789789789" \
-  --set "slack_channel=my-slack-channel-name"
+  --set "slack_channel=my-slack-channel-name" \
+  --set "slack_prefix=This is my dev cluster"
 ```
 
 There are also various other variables you're able to set as easily as above. Please see: [values.yaml](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/blob/master/helm-chart/values.yaml#L9) for all the simple values to adjust this service. In addition, review the rest of that file if you'd like to adjust other things (like resource limits, node selectors, taints/tolerances, adding labels, etc).
@@ -184,6 +185,28 @@ spec:
     requests:
       storage: 1Gi
   storageClassName: standard
+```
+
+
+## Victoriametrics compatibility
+
+If you are using victoriametrics in the helm chart simply set this value to true as follows...
+
+```bash
+helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
+  --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE \
+  --set "victoriametrics_mode=true"
+```
+
+
+# Mimir or Cortex compatibility
+
+If you are using Mimir or Cortex you will need to add an authentication header into our requests to Prometheus for them to function.  To do this, simply set a value in our helm chart as follows.  For more details see the [Mimir documentation on Authentication](https://grafana.com/docs/mimir/latest/references/http-api/#authentication) or the [Grafana Mimir docs here](https://grafana.com/docs/mimir/latest/operators-guide/secure/authentication-and-authorization/#grafana-mimir-authentication-and-authorization)
+
+```bash
+helm upgrade --install volume-autoscaler devops-nirvana/volume-autoscaler \
+  --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE \
+  --set "scope_orgid_auth_header=tenant-1|tenant-2|tenant-3"
 ```
 
 
@@ -307,6 +330,10 @@ The following environment variables are settable during development to alter the
 |------------------------|----------------|-------------|
 | INTERVAL_TIME          | 60             | How often (in seconds) to scan Prometheus for checking if we need to resize |
 | SCALE_ABOVE_PERCENT    | 80             | What percent out of 100 the volume must be consuming before considering to scale it |
+| SLACK_WEBHOOK          |                | A Slack webhook to automatically send alerts to upon resizing |
+| SLACK_CHANNEL          | devops         | The default Slack channel to send alerts to (if your webhook is allowed to send to different channels) |
+| SLACK_MESSAGE_PREFIX   |                | A prefix added to every Slack message send, to alert or inform you of what cluster it is on |
+| SLACK_MESSAGE_SUFFIX   |                | A suffix added to every Slack message send, to alert or inform you of what cluster it is on |
 | SCALE_AFTER_INTERVALS  | 5              | How many intervals of INTERVAL_TIME a volume must be above SCALE_ABOVE_PERCENT before we scale |
 | SCALE_UP_PERCENT       | 20             | How much percent of the current volume size to scale up by. (100 == (if disk is 10GB, scale to 20GB), eg: 20 == (if disk is 10GB, scale to 12GB) |
 | SCALE_UP_MIN_INCREMENT | 1000000000     | How many bytes is the minimum that we can resize up by, default is 1GB (in bytes, so 1000000000) |
@@ -318,3 +345,5 @@ The following environment variables are settable during development to alter the
 | PROMETHEUS_LABEL_MATCH |                | A PromQL label query to restrict volumes for this to see and scale, without braces. eg: 'namespace="dev"' |
 | HTTP_TIMEOUT           | 15             | Allows to set the timeout for calls to Prometheus and Kubernetes. Adjust this if your Prometheus or Kubernetes is over a remote WAN link with high latency and/or is heavily loaded |
 | VERBOSE                | false          | If we want to verbose mode, prints out the raw data from each PVC and its status/state instead of the default "" |
+| VICTORIAMETRICS_COMPAT  | false          | Whether to skip the prometheus check and assume victoriametrics |
+| SCOPE_ORGID_AUTH_HEADER |                | The auth header to set when using Mimir or Cortex see [Mimir docs](https://grafana.com/docs/mimir/latest/references/http-api/#authentication) |

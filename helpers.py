@@ -79,7 +79,7 @@ class GracefulKiller:
 
 # Setup a cache helper for caching and expiring things with TTLs, used for debouncing
 class Cache:
-    def __init__(self, ttl=300):
+    def __init__(self, ttl=60):
         self.ttl = ttl
         self.cache = {}
 
@@ -105,8 +105,8 @@ class Cache:
     def reset(self):
         self.cache = {}
 
-
-cache = Cache(ttl=300)
+# Note: We want the TTL time to be 5x the interval time by default to ensure items in it last through a few intervals incase of jitter
+cache = Cache(ttl=INTERVAL_TIME * 5)
 
 
 #############################

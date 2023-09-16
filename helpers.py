@@ -143,11 +143,11 @@ def printHeaderAndConfiguration():
     print("          Scale up maximum size: {} bytes, or {}".format(SCALE_UP_MAX_SIZE, convert_bytes_to_storage(SCALE_UP_MAX_SIZE)))
     print("            Scale up percentage: {}% of current disk size".format(SCALE_UP_PERCENT))
     print("              Scale up cooldown: only resize every {} seconds".format(SCALE_COOLDOWN_TIME))
-    print("                   Verbose Mode: is {}".format("ENABLED" if VERBOSE else "Disabled"))
-    print("                        Dry Run: is {}".format("ENABLED, no scaling will occur!" if DRY_RUN else "Disabled"))
-    print("     HTTP Timeouts for k8s/prom: is {} seconds".format(HTTP_TIMEOUT))
-    print("           VictoriaMetrics mode: is {}".format("Enabled" if VICTORIAMETRICS_COMPAT else "Disabled"))
-    print("X-Scope-OrgID Header for Cortex: {}".format(SCOPE_ORGID_AUTH_HEADER))
+    print("                   Verbose Mode: {}".format("ENABLED" if VERBOSE else "disabled"))
+    print("                        Dry Run: {}".format("ENABLED, no scaling will occur!" if DRY_RUN else "disabled"))
+    print("     HTTP Timeouts for k8s/prom: {} seconds".format(HTTP_TIMEOUT))
+    print("           VictoriaMetrics mode: {}".format("ENABLED" if VICTORIAMETRICS_COMPAT else "disabled"))
+    print("X-Scope-OrgID Header for Cortex: {}".format(SCOPE_ORGID_AUTH_HEADER if len(SCOPE_ORGID_AUTH_HEADER) else "is disabled"))
     print("-------------------------------------------------------------------------------------------------------------")
 
 

@@ -1,6 +1,6 @@
 # Kubernetes Volume / Disk Autoscaler (via Prometheus)
 
-<a href="https://hub.docker.com/r/devopsnirvana/kubernetes-volume-autoscaler"><img src="https://img.shields.io/docker/pulls/devopsnirvana/kubernetes-volume-autoscaler?style=plastic" alt="Docker Hub Pulls"></a> <a href="https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.6"><img src="https://img.shields.io/docker/v/devopsnirvana/kubernetes-volume-autoscaler/1.0.6?label=Latest%20Release&style=plastic" alt="Latest Release"></a> <a href="https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/stargazers"><img src="https://img.shields.io/github/stars/DevOps-Nirvana/Kubernetes-Volume-Autoscaler?style=social" alt="Stargazers on Github"></a>
+<a href="https://hub.docker.com/r/devopsnirvana/kubernetes-volume-autoscaler"><img src="https://img.shields.io/docker/pulls/devopsnirvana/kubernetes-volume-autoscaler?style=plastic" alt="Docker Hub Pulls"></a> <a href="https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.7"><img src="https://img.shields.io/docker/v/devopsnirvana/kubernetes-volume-autoscaler/1.0.7?label=Latest%20Release&style=plastic" alt="Latest Release"></a> <a href="https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/stargazers"><img src="https://img.shields.io/github/stars/DevOps-Nirvana/Kubernetes-Volume-Autoscaler?style=social" alt="Stargazers on Github"></a>
 
 This repository contains a [Kubernetes controller](https://kubernetes.io/docs/concepts/architecture/controller/) that automatically increases the size of a Persistent Volume Claim (PVC) in Kubernetes when it is nearing full. Initially engineered based on AWS EKS, this should support any Kubernetes cluster or cloud provider which supports dynamically hot-resizing storage volumes in Kubernetes.
 
@@ -108,15 +108,15 @@ helm uninstall volume-autoscaler
 # the namespace you can run the first few commands below...
 
 # IF YOU USE `infrastructure` AS THE NAMESPACE FOR PROMETHEUS SIMPLY...
-kubectl --namespace infrastructure apply https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.6.yaml
+kubectl --namespace infrastructure apply https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.7.yaml
 
 # OR, IF YOU NEED TO CHANGE THE NAMESPACE...
 # #1: Download the yaml...
-wget https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.6.yaml
+wget https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.7.yaml
 # #1: Or download with curl
-curl https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.6.yaml -o volume-autoscaler-1.0.6.yaml
+curl https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.7.yaml -o volume-autoscaler-1.0.7.yaml
 # #2: Then replace the namespace in this, replacing
-cat volume-autoscaler-1.0.6.yaml | sed 's/"infrastructure"/"PROMETHEUS_NAMESPACE_HERE"/g' > ./to_be_applied.yaml
+cat volume-autoscaler-1.0.7.yaml | sed 's/"infrastructure"/"PROMETHEUS_NAMESPACE_HERE"/g' > ./to_be_applied.yaml
 # #3: If you wish to have slack notifications, edit this to_be_applied.yaml and embed your webhook on the value: line for SLACK_WEBHOOK and set the SLACK_CHANNEL as well accordingly
 # #4: Finally, apply it...
 kubectl --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE apply ./to_be_applied.yaml
@@ -231,9 +231,16 @@ This controller also supports publishing prometheus metrics automatically.  It h
 
 ### [Current Release: 1.0.7 - September 17, 2023](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.7)
 ```
-TODO
+* Add GitHub workflow for automated docker build by @piec in (#12)
+* fix: various exception/failure path undefined by @24601 in (#14)
+* Fixing vulnerabilities September 2023 by @AndrewFarley in (#16)
+* Add Slack Prefix/Suffix support
+* Adding debounce to prevent two changes from being made to the same volume too quickly (10x interval time)
+* Updating helm chart for Kubernetes 1.21-1.26 support (tested/validated)
+* Adding Cortex/Mimir support
+* Updating to Python 3.11 Alpine 3.18 (related to security vulnerabilities)
+* Minor quality of life improvements (documentation, comments, improved startup message, etc)
 ```
-
 
 ### [Current Release: 1.0.6 - Oct 26, 2022](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.6)
 ```
@@ -245,7 +252,7 @@ Adding compatibility for up at least Kubernetes 1.25 (tested)
 Fixing a fatal error that occurred
 ```
 
-### [Release: 1.0.5 - Oct 26, 2022](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.6)
+### [Release: 1.0.5 - Oct 26, 2022](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.5)
 ```
 Handling low max disk size edge-case better (thanks @GuillaumeOuint)
 Human-readable debug output much improved
@@ -300,9 +307,9 @@ This tool can easily be run locally, as long as you have an functioning kubectl 
 ```bash
 # To test out/develop new features, first get your Prometheus IP address...
 kubectl get services --all-namespaces | grep -i prometheus-server
-infrastructure  prometheus-server  ClusterIP  10.1.0.67.102  <none>  80/TCP  109d
+infrastructure  prometheus-server  ClusterIP  10.1.0.102  <none>  80/TCP  109d
 # Then take its IP address and check if you can use it...
-curl http://10.1.0.67.102
+curl http://10.1.0.102
 <a href="/graph">Found</a>
 # Alternatively, if your ops/devops person setup an ingress to make this accessible externally...
 curl https://prometheus.mycompany.com

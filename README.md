@@ -229,6 +229,12 @@ This controller also supports publishing prometheus metrics automatically.  It h
 
 # Release History
 
+### [Current Release: 1.0.7 - September 17, 2023](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.7)
+```
+TODO
+```
+
+
 ### [Current Release: 1.0.6 - Oct 26, 2022](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.6)
 ```
 Minor textual changes, grammar, etc (thanks @anthea-w)
@@ -283,23 +289,9 @@ Some basic documentation and installation help/guides
 
 # TODO
 
-This todo list is mostly for the Author(s), but any contributions are also welcome. Please [submit an Issue](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/issues) for issues/requests, or a [Pull Request](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/pulls) if you added some code.  These items are generally put in order of most-important first.
+See [issues](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/issues) and [Random Feature Ideas](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/issues/17)
 
-* Listen/watch to events of the PV/PVC, or listen/read from Prometheus to monitor and ensure the resizing happens, log and/or slack it accordingly
-* Catch WHY resizing failed (try?) and make sure to log/send to slack/k8s events the why
-* Check if storage class has the ALLOWVOLUMEEXPANSION to (help?) ensure the expansion will succeed, do something about it and/or report it
-* Add full helm chart values documentation markdown table (tie into adding docs for Universal Helm Charts)
-* Push to helm repo in a Github Action and push the static yaml as well, make things "easier" and automated
-* Add badges to the README regarding Github Actions success/failures
-* Add tests coverage to ensure the software works as intended moving forward
-* Make per-PVC annotations to (re)direct Slack to different webhooks and/or different channel(s)?
-* Discuss what the ideal "default" amount of time before scaling.  Currently is 5 minutes (5, 60 minute intervals)
-* Add better examples for "best practices" when using Helm (aka, subchart)
-* Test it and add working examples of using this on other cloud providers (Azure / Google Cloud)
-* Auto-detect (or let user choose) a different provider (eg: AWS/Google) and set different per-provider defaults (eg: wait time, min/max disk size, min disk increment, etc)
-* Prevent flooding to slack if many items (per-loop) need to be scaled.  Group them into one big message!
-* Make it possible to autoscale up node's root volumes?  This will require significant engineering, as this would require talking to the provider APIs, and require an IAM/OIDC/AccessKey/etc to be able to scale the root volume up.  Likely very challenging, but would be ideal to handle.  Consider writing a new service dedicated for this instead.
-* Add filter to allow users to specify only which StorageClasses to support, default of "all" or "*"
+
 
 # Notes for Development
 
@@ -347,3 +339,8 @@ The following environment variables are settable during development to alter the
 | VERBOSE                | false          | If we want to verbose mode, prints out the raw data from each PVC and its status/state instead of the default "" |
 | VICTORIAMETRICS_COMPAT  | false          | Whether to skip the prometheus check and assume victoriametrics |
 | SCOPE_ORGID_AUTH_HEADER |                | The auth header to set when using Mimir or Cortex see [Mimir docs](https://grafana.com/docs/mimir/latest/references/http-api/#authentication) |
+
+
+# Contributors
+
+Thanks for [your contributions](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/graphs/contributors) both in the form of filing issues, PRs, and emailing me occasionally about this project.

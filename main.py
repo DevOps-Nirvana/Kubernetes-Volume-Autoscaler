@@ -23,7 +23,7 @@ PROMETHEUS_METRICS['num_pvcs_below_threshold'] = Gauge('volume_autoscaler_num_pv
 PROMETHEUS_METRICS['num_pvcs_below_threshold'].set(0)
 # Initialize our Prometheus metrics (info/settings)
 PROMETHEUS_METRICS['info'] = Info('volume_autoscaler_release', 'Release/version information about this volume autoscaler service')
-PROMETHEUS_METRICS['info'].info({'version': '1.0.5'})
+PROMETHEUS_METRICS['info'].info({'version': '1.0.7'})
 PROMETHEUS_METRICS['settings'] = Info('volume_autoscaler_settings', 'Settings currently used in this service')
 PROMETHEUS_METRICS['settings'].info(get_settings_for_prometheus_metrics())
 

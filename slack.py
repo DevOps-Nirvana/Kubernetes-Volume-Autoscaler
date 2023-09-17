@@ -44,12 +44,10 @@ SLACK_CHANNEL = os.getenv('SLACK_CHANNEL', "devops")
 # Slack message prefix/suffixes
 SLACK_MESSAGE_PREFIX = os.getenv('SLACK_MESSAGE_PREFIX', "")
 if len(SLACK_MESSAGE_PREFIX) > 0:
-     SLACK_MESSAGE_PREFIX = SLACK_MESSAGE_PREFIX.strip() + " "
+     SLACK_MESSAGE_PREFIX = SLACK_MESSAGE_PREFIX.strip() + " "  # Note: We add a spacer here intentionally
 SLACK_MESSAGE_SUFFIX = os.getenv('SLACK_MESSAGE_SUFFIX', "")
 if len(SLACK_MESSAGE_SUFFIX) > 0:
-     SLACK_MESSAGE_SUFFIX = " " + (SLACK_MESSAGE_SUFFIX.strip())
-
-print(f"PREFIX{SLACK_MESSAGE_PREFIX}SUFFIX{SLACK_MESSAGE_SUFFIX}DONE")
+     SLACK_MESSAGE_SUFFIX = SLACK_MESSAGE_SUFFIX.strip()  # Note: We add a spacer before sending to slack
 
 # Usage and CLI opts handling
 usage = '  \n\
@@ -72,7 +70,7 @@ def send(body, username="Kubernetes Volume Autoscaler", severity="info", channel
     # Begin to build our payload
     payload = {
         'username': username + ' - ' + severity.title(),
-        'text':     SLACK_MESSAGE_PREFIX + body + SLACK_MESSAGE_SUFFIX,
+        'text':     SLACK_MESSAGE_PREFIX + body + " " + SLACK_MESSAGE_SUFFIX,
         'link_names': 1
     }
 

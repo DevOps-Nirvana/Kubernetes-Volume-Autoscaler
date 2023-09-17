@@ -8,6 +8,7 @@ from packaging import version  # For checking if prometheus version is new enoug
 import signal                  # For sigkill handling
 import random                  # Random string generation
 import traceback               # Debugging/trace outputs
+import slack                   # For sending slack messages
 
 # Used below in init variables
 def detectPrometheusURL():
@@ -148,7 +149,12 @@ def printHeaderAndConfiguration():
     print("                        Dry Run: {}".format("ENABLED, no scaling will occur!" if DRY_RUN else "disabled"))
     print("     HTTP Timeouts for k8s/prom: {} seconds".format(HTTP_TIMEOUT))
     print("           VictoriaMetrics mode: {}".format("ENABLED" if VICTORIAMETRICS_COMPAT else "disabled"))
-    print("X-Scope-OrgID Header for Cortex: {}".format(SCOPE_ORGID_AUTH_HEADER if len(SCOPE_ORGID_AUTH_HEADER) else "is disabled"))
+    print("X-Scope-OrgID Header for Cortex: {}".format(SCOPE_ORGID_AUTH_HEADER if len(SCOPE_ORGID_AUTH_HEADER) else "disabled"))
+    print(" Sending notifications to Slack: {}".format("ENABLED" if len(slack.SLACK_WEBHOOK_URL) > 0 else "disabled"))
+    if len(slack.SLACK_WEBHOOK_URL) > 0:
+        print("                  Slack channel: {}".format(slack.SLACK_CHANNEL))
+        print("           Slack message prefix: {}".format(slack.SLACK_MESSAGE_PREFIX))
+        print("           Slack message suffix: {}".format(slack.SLACK_MESSAGE_SUFFIX))
     print("-------------------------------------------------------------------------------------------------------------")
 
 

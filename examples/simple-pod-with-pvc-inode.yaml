@@ -8,7 +8,7 @@
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: test-claim1
+  name: test-claim-inode1
 spec:
   accessModes:
     - ReadWriteOnce
@@ -19,7 +19,7 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: test-claim1
+  name: test-claim-inode1
 spec:
   containers:
   - name: write
@@ -35,5 +35,5 @@ spec:
   volumes:
   - name: test-volume
     persistentVolumeClaim:
-      claimName: test-claim1
+      claimName: test-claim-inode1
   restartPolicy: Never

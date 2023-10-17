@@ -1,6 +1,6 @@
 # Kubernetes Volume / Disk Autoscaler (via Prometheus)
 
-<a href="https://hub.docker.com/r/devopsnirvana/kubernetes-volume-autoscaler"><img src="https://img.shields.io/docker/pulls/devopsnirvana/kubernetes-volume-autoscaler?style=plastic" alt="Docker Hub Pulls"></a> <a href="https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.7"><img src="https://img.shields.io/docker/v/devopsnirvana/kubernetes-volume-autoscaler/1.0.7?label=Latest%20Release&style=plastic" alt="Latest Release"></a> <a href="https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/stargazers"><img src="https://img.shields.io/github/stars/DevOps-Nirvana/Kubernetes-Volume-Autoscaler?style=social" alt="Stargazers on Github"></a>
+<a href="https://hub.docker.com/r/devopsnirvana/kubernetes-volume-autoscaler"><img src="https://img.shields.io/docker/pulls/devopsnirvana/kubernetes-volume-autoscaler?style=plastic" alt="Docker Hub Pulls"></a> <a href="https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.8"><img src="https://img.shields.io/docker/v/devopsnirvana/kubernetes-volume-autoscaler/1.0.8?label=Latest%20Release&style=plastic" alt="Latest Release"></a> <a href="https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/stargazers"><img src="https://img.shields.io/github/stars/DevOps-Nirvana/Kubernetes-Volume-Autoscaler?style=social" alt="Stargazers on Github"></a>
 
 This repository contains a [Kubernetes controller](https://kubernetes.io/docs/concepts/architecture/controller/) that automatically increases the size of a Persistent Volume Claim (PVC) in Kubernetes when it is nearing full. Initially engineered based on AWS EKS, this should support any Kubernetes cluster or cloud provider which supports dynamically hot-resizing storage volumes in Kubernetes.
 
@@ -108,15 +108,15 @@ helm uninstall volume-autoscaler
 # the namespace you can run the first few commands below...
 
 # IF YOU USE `infrastructure` AS THE NAMESPACE FOR PROMETHEUS SIMPLY...
-kubectl --namespace infrastructure apply https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.7.yaml
+kubectl --namespace infrastructure apply https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.8.yaml
 
 # OR, IF YOU NEED TO CHANGE THE NAMESPACE...
 # #1: Download the yaml...
-wget https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.7.yaml
+wget https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.8.yaml
 # #1: Or download with curl
-curl https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.7.yaml -o volume-autoscaler-1.0.7.yaml
+curl https://devops-nirvana.s3.amazonaws.com/volume-autoscaler/volume-autoscaler-1.0.8.yaml -o volume-autoscaler-1.0.8.yaml
 # #2: Then replace the namespace in this, replacing
-cat volume-autoscaler-1.0.7.yaml | sed 's/"infrastructure"/"PROMETHEUS_NAMESPACE_HERE"/g' > ./to_be_applied.yaml
+cat volume-autoscaler-1.0.8.yaml | sed 's/"infrastructure"/"PROMETHEUS_NAMESPACE_HERE"/g' > ./to_be_applied.yaml
 # #3: If you wish to have slack notifications, edit this to_be_applied.yaml and embed your webhook on the value: line for SLACK_WEBHOOK and set the SLACK_CHANNEL as well accordingly
 # #4: Finally, apply it...
 kubectl --namespace REPLACEME_WITH_PROMETHEUS_NAMESPACE apply ./to_be_applied.yaml
@@ -229,7 +229,12 @@ This controller also supports publishing prometheus metrics automatically.  It h
 
 # Release History
 
-### [Current Release: 1.0.7 - September 17, 2023](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.7)
+### [Current Release: 1.0.8 - October 17, 2023](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.8)
+```
+* Implemented scaling on reaching inode count limits (#18)
+```
+
+### [Release: 1.0.7 - September 17, 2023](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.7)
 ```
 * Add GitHub workflow for automated docker build by @piec in (#12)
 * fix: various exception/failure path undefined by @24601 in (#14)
@@ -242,7 +247,7 @@ This controller also supports publishing prometheus metrics automatically.  It h
 * Minor quality of life improvements (documentation, comments, improved startup message, etc)
 ```
 
-### [Current Release: 1.0.6 - Oct 26, 2022](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.6)
+### [Release: 1.0.6 - Oct 26, 2022](https://github.com/DevOps-Nirvana/Kubernetes-Volume-Autoscaler/releases/tag/1.0.6)
 ```
 Minor textual changes, grammar, etc (thanks @anthea-w)
 Implement victoriametrics mode (#8) (thanks @martin31821)

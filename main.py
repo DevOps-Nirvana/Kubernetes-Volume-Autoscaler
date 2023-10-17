@@ -87,6 +87,12 @@ if __name__ == "__main__":
                 volume_namespace = str(item['metric']['namespace'])
                 volume_description = "{}.{}".format(item['metric']['namespace'], item['metric']['persistentvolumeclaim'])
                 volume_used_percent = int(item['value'][1])
+                pvcs_in_kubernetes[volume_description]['volume_used_percent'] = volume_used_percent
+                try:
+                    volume_used_inode_percent = int(item['value_inodes'])
+                except:
+                    volume_used_inode_percent = -1
+                pvcs_in_kubernetes[volume_description]['volume_used_inode_percent'] = volume_used_inode_percent
 
                 # Precursor check to ensure we have info for this pvc in kubernetes object
                 if volume_description not in pvcs_in_kubernetes:
@@ -94,18 +100,24 @@ if __name__ == "__main__":
                     continue
 
                 if VERBOSE:
-                    print("Volume {} is {}% in-use of the {} available".format(volume_description,volume_used_percent,pvcs_in_kubernetes[volume_description]['volume_size_status']))
                     print("  VERBOSE DETAILS:")
                     print("-------------------------------------------------------------------------------------------------------------")
                     print_human_readable_volume_dict(pvcs_in_kubernetes[volume_description])
                     print("-------------------------------------------------------------------------------------------------------------")
+                    print("Volume {} has {}% disk space used of the {} available".format(volume_description,volume_used_percent,pvcs_in_kubernetes[volume_description]['volume_size_status']))
+                    if volume_used_inode_percent > -1:
+                        print("Volume {} has {}% inodes used".format(volume_description,volume_used_inode_percent))
 
                 # Check if we are NOT in an alert condition
-                if volume_used_percent < pvcs_in_kubernetes[volume_description]['scale_above_percent']:
+                if volume_used_percent < pvcs_in_kubernetes[volume_description]['scale_above_percent'] and volume_used_inode_percent < pvcs_in_kubernetes[volume_description]['scale_above_percent']:
                     PROMETHEUS_METRICS['num_pvcs_below_threshold'].inc()
                     cache.unset(volume_description)
                     if VERBOSE:
-                        print(" and is not above {}%".format(pvcs_in_kubernetes[volume_description]['scale_above_percent']))
+                        print("  and is not above {}% used".format(pvcs_in_kubernetes[volume_description]['scale_above_percent']))
+                        if volume_used_inode_percent > -1:
+                            print("  and is not above {}% inodes used".format(pvcs_in_kubernetes[volume_description]['scale_above_percent']))
+                    if VERBOSE:
+                        print("=============================================================================================================")
                     continue
                 else:
                     PROMETHEUS_METRICS['num_pvcs_above_threshold'].inc()
@@ -115,22 +127,30 @@ if __name__ == "__main__":
                     cache.set(volume_description, cache.get(volume_description) + 1)
                 else:
                     cache.set(volume_description, 1)
+
                 # Incase we aren't verbose, and didn't print this above, now that we're in alert we will print this
                 if not VERBOSE:
                     print("Volume {} is {}% in-use of the {} available".format(volume_description,volume_used_percent,pvcs_in_kubernetes[volume_description]['volume_size_status']))
-                # Print the alert status
-                print("  BECAUSE it is above {}% used".format(pvcs_in_kubernetes[volume_description]['scale_above_percent']))
+                    print("Volume {} is {}% inode in-use".format(volume_description,volume_used_inode_percent))
+
+                # Print the alert status and reason
+                if volume_used_percent >= pvcs_in_kubernetes[volume_description]['scale_above_percent']:
+                    print("  BECAUSE it has space used above {}%".format(pvcs_in_kubernetes[volume_description]['scale_above_percent']))
+                elif volume_used_inode_percent >= pvcs_in_kubernetes[volume_description]['scale_above_percent']:
+                    print("  BECAUSE it has inodes used above {}%".format(pvcs_in_kubernetes[volume_description]['scale_above_percent']))
                 print("  ALERT has been for {} period(s) which needs to at least {} period(s) to scale".format(cache.get(volume_description), pvcs_in_kubernetes[volume_description]['scale_after_intervals']))
 
                 # Check if we are NOT in a possible scale condition
                 if cache.get(volume_description) < pvcs_in_kubernetes[volume_description]['scale_after_intervals']:
                     print("  BUT need to wait for {} intervals in alert before considering to scale".format( pvcs_in_kubernetes[volume_description]['scale_after_intervals'] ))
                     print("  FYI this has desired_size {} and current size {}".format( convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_spec_bytes']), convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes'])))
+                    print("=============================================================================================================")
                     continue
 
                 # If we are in a possible scale condition, check if we recently scaled it and handle accordingly
                 if pvcs_in_kubernetes[volume_description]['last_resized_at'] + pvcs_in_kubernetes[volume_description]['scale_cooldown_time'] >= int(time.mktime(time.gmtime())):
                     print("  BUT need to wait {} seconds to scale since the last scale time {} seconds ago".format( abs(pvcs_in_kubernetes[volume_description]['last_resized_at'] + pvcs_in_kubernetes[volume_description]['scale_cooldown_time']) - int(time.mktime(time.gmtime())), abs(pvcs_in_kubernetes[volume_description]['last_resized_at'] - int(time.mktime(time.gmtime()))) ))
+                    print("=============================================================================================================")
                     continue
 
                 # If we reach this far then we will be scaling the disk, all preconditions were passed from above
@@ -155,7 +175,7 @@ if __name__ == "__main__":
                     print("  Error/Exception while trying to determine what to resize to, volume causing failure:")
                     print("-------------------------------------------------------------------------------------------------------------")
                     print(pvcs_in_kubernetes[volume_description])
-                    print("-------------------------------------------------------------------------------------------------------------")
+                    print("=============================================================================================================")
                     continue
 
                 # If our resize bytes is less than our original size (because the user set the max-bytes to something too low)
@@ -169,33 +189,37 @@ if __name__ == "__main__":
                     print("-------------------------------------------------------------------------------------------------------------")
                     print(" Volume causing failure:")
                     print_human_readable_volume_dict(pvcs_in_kubernetes[volume_description])
-                    print("-------------------------------------------------------------------------------------------------------------")
+                    print("=============================================================================================================")
                     continue
 
                 # Check if we are already at the max volume size (either globally, or this-volume specific)
                 if resize_to_bytes == pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']:
                     print("  SKIPPING scaling this because we are at the maximum size of {}".format(convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['scale_up_max_size'])))
+                    print("=============================================================================================================")
                     continue
 
                 # Check if we set on this PV we want to ignore the volume autoscaler
                 if pvcs_in_kubernetes[volume_description]['ignore']:
                     print("  IGNORING scaling this because the ignore annotation was set to true")
+                    print("=============================================================================================================")
                     continue
 
                 # Lets debounce this incase we did this resize last interval(s)
                 if cache.get(f"{volume_description}-has-been-resized"):
                     print("  DEBOUNCING and skipping this scaling, we resized within recent intervals")
+                    print("=============================================================================================================")
                     continue
 
                 # Check if we are DRY-RUN-ing and won't do anything
                 if DRY_RUN:
                     print("  DRY RUN was set, but we would have resized this disk from {} to {}".format(convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']), convert_bytes_to_storage(resize_to_bytes)))
+                    print("=============================================================================================================")
                     continue
 
                 # If we aren't dry-run, lets resize
                 PROMETHEUS_METRICS['resize_attempted'].inc()
                 print("  RESIZING disk from {} to {}".format(convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']), convert_bytes_to_storage(resize_to_bytes)))
-                status_output = "to scale up `{}` by `{}%` from `{}` to `{}`, it was using more than `{}%` disk space over the last `{} seconds`".format(
+                status_output = "to scale up `{}` by `{}%` from `{}` to `{}`, it was using more than `{}%` disk or inode space over the last `{} seconds`".format(
                     volume_description,
                     pvcs_in_kubernetes[volume_description]['scale_up_percent'],
                     convert_bytes_to_storage(pvcs_in_kubernetes[volume_description]['volume_size_status_bytes']),
@@ -240,6 +264,9 @@ if __name__ == "__main__":
                 print("Exception caught while trying to process record")
                 print(item)
                 traceback.print_exc()
+
+            if VERBOSE:
+                print("=============================================================================================================")
 
         # Wait until our next interval
         time.sleep(MAIN_LOOP_TIME)

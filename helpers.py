@@ -37,7 +37,7 @@ PROMETHEUS_URL = getenv('PROMETHEUS_URL') or detectPrometheusURL()              
 DRY_RUN = True if getenv('DRY_RUN', "false").lower() == "true" else False        # If we want to dry-run this
 PROMETHEUS_LABEL_MATCH = getenv('PROMETHEUS_LABEL_MATCH') or ''                  # A PromQL label query to restrict volumes for this to see and scale, without braces.  eg: 'namespace="dev"'
 HTTP_TIMEOUT = int(getenv('HTTP_TIMEOUT', "15")) or 15                           # Allows to set the timeout for calls to Prometheus and Kubernetes.  This might be needed if your Prometheus or Kubernetes is over a remote WAN link with high latency and/or is heavily loaded
-PROMETHEUS_VERSION = "Unknown"                                                   # Used to detect the availability of a new function called present_over_time only available on Prometheus v2.30.0 or newer, this is auto-detected and updated, not set by a user
+PROMETHEUS_VERSION = "0.0.0"                                                     # Used to detect the availability of a new function called present_over_time only available on Prometheus v2.30.0 or newer, this is auto-detected and updated, not set by a user
 VERBOSE = True if getenv('VERBOSE', "false").lower() == "true" else False        # If we want to verbose mode
 VICTORIAMETRICS_COMPAT = True if getenv('VICTORIAMETRICS_MODE', "false").lower() == "true" else False # Whether to skip the prometheus check and assume victoriametrics
 SCOPE_ORGID_AUTH_HEADER = getenv('SCOPE_ORGID_AUTH_HEADER') or ''                # If we want to use Mimir or AgentMode which requires an orgid header.  See: https://grafana.com/docs/mimir/latest/references/http-api/#authentication
@@ -489,7 +489,36 @@ def fetch_pvcs_from_prometheus(url, label_match=PROMETHEUS_LABEL_MATCH):
             print("Prometheus Error: {}".format(response_object['error']))
             exit(-1)
 
-    return response_object['data']['result']
+    #TODO: Inject here "trying" to get inode percentage usage also
+    try:
+        if version.parse(PROMETHEUS_VERSION) >= version.parse("2.30.0"):
+            inodes_response = requests.get(url + '/api/v1/query', params={'query': "ceil((1 - kubelet_volume_stats_inodes_free{{ {} }} / kubelet_volume_stats_inodes)*100) and present_over_time(kubelet_volume_stats_inodes_free{{ {} }}[1h])".format(label_match,label_match)}, timeout=HTTP_TIMEOUT, headers=headers)
+        else:
+            inodes_response = requests.get(url + '/api/v1/query', params={'query': "ceil((1 - kubelet_volume_stats_inodes_free{{ {} }} / kubelet_volume_stats_inodes)*100)".format(label_match,label_match)}, timeout=HTTP_TIMEOUT, headers=headers)
+        inodes_response_object = inodes_response.json()
+
+        # Prepare values to merge/inject with our first response_object list/array above
+        inject_values = {}
+        for item in inodes_response_object['data']['result']:
+            ourkey = "{}_{}".format(item['metric']['namespace'], item['metric']['persistentvolumeclaim'])
+            inject_values[ourkey] = item['value'][1]
+
+        output_response_object = []
+        # Inject/merge them...
+        for item in response_object['data']['result']:
+            try:
+                ourkey = "{}_{}".format(item['metric']['namespace'], item['metric']['persistentvolumeclaim'])
+                if ourkey in inject_values:
+                    item['value_inodes'] = inject_values[ourkey]
+            except Exception as e:
+                print("Caught exception while trying to inject, please report me...")
+                print(e)
+            output_response_object.append(item)
+    except Exception as e:
+        print("Caught exception while trying to inject inode usage, please report me...")
+        print(e)
+
+    return output_response_object
 
 
 # Describe an specific PVC
@@ -550,13 +579,13 @@ def send_kubernetes_event(namespace, name, reason, message, type="Normal"):
 # Print a sexy human readable dict for volume
 def print_human_readable_volume_dict(input_dict):
     for key in input_dict:
-        print("    {}: {}".format(key.rjust(24), input_dict[key]), end='')
+        print("    {}: {}".format(key.rjust(25), input_dict[key]), end='')
         if key in ['volume_size_spec','volume_size_spec_bytes','volume_size_status','volume_size_status_bytes','scale_up_min_increment','scale_up_max_increment','scale_up_max_size'] and is_integer_or_float(input_dict[key]):
             print(" ({})".format(convert_bytes_to_storage(input_dict[key])), end='')
         if key in ['scale_cooldown_time']:
             print(" ({})".format(time.strftime('%H:%M:%S', time.gmtime(input_dict[key]))), end='')
         if key in ['last_resized_at']:
             print(" ({})".format(time.strftime('%Y-%m-%d %H:%M:%S %Z %z', time.localtime(input_dict[key]))), end='')
-        if key in ['scale_up_percent','scale_above_percent']:
+        if key in ['scale_up_percent','scale_above_percent','volume_used_percent','volume_used_inode_percent']:
             print("%", end='')
         print("") # Newline

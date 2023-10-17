@@ -8,3 +8,5 @@ values.yaml.upstream
 to_be_applied.yaml
 index.yaml
 *.patch
+for-release
+unused*

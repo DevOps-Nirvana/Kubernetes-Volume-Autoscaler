@@ -87,17 +87,18 @@ if __name__ == "__main__":
                 volume_namespace = str(item['metric']['namespace'])
                 volume_description = "{}.{}".format(item['metric']['namespace'], item['metric']['persistentvolumeclaim'])
                 volume_used_percent = int(item['value'][1])
+
+                # Precursor check to ensure we have info for this pvc in kubernetes object
+                if volume_description not in pvcs_in_kubernetes:
+                    print("ERROR: The volume {} was not found in Kubernetes but had metrics in Prometheus.  This may be an old volume, was just deleted, or some random jitter is occurring.  If this continues to occur, please report an bug.  You might also be using an older version of Prometheus, please make sure you're using v2.30.0 or newer before reporting a bug for this.".format(volume_description))
+                    continue
+
                 pvcs_in_kubernetes[volume_description]['volume_used_percent'] = volume_used_percent
                 try:
                     volume_used_inode_percent = int(item['value_inodes'])
                 except:
                     volume_used_inode_percent = -1
                 pvcs_in_kubernetes[volume_description]['volume_used_inode_percent'] = volume_used_inode_percent
-
-                # Precursor check to ensure we have info for this pvc in kubernetes object
-                if volume_description not in pvcs_in_kubernetes:
-                    print("ERROR: The volume {} was not found in Kubernetes but had metrics in Prometheus.  This may be an old volume, was just deleted, or some random jitter is occurring.  If this continues to occur, please report an bug.  You might also be using an older version of Prometheus, please make sure you're using v2.30.0 or newer before reporting a bug for this.".format(volume_description))
-                    continue
 
                 if VERBOSE:
                     print("  VERBOSE DETAILS:")

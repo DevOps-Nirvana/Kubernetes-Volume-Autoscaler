@@ -1,5 +1,5 @@
 # Globals and input args
-FROM python:3.11.5-alpine3.18
+FROM python:3.12.3-alpine3.20
 WORKDIR /app
 
 # Prepare our app requirements and install it...
